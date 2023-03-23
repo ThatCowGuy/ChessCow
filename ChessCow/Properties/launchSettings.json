@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ChessCow": {
+      "commandName": "Project",
+      "nativeDebugging": false
+    }
+  }
+}

@@ -1,0 +1,16 @@
+C:\Users\cray4\source\repos\ChessCow\ChessCow\bin\Debug\netcoreapp3.0\ChessCow.exe
+C:\Users\cray4\source\repos\ChessCow\ChessCow\bin\Debug\netcoreapp3.0\ChessCow.deps.json
+C:\Users\cray4\source\repos\ChessCow\ChessCow\bin\Debug\netcoreapp3.0\ChessCow.runtimeconfig.json
+C:\Users\cray4\source\repos\ChessCow\ChessCow\bin\Debug\netcoreapp3.0\ChessCow.runtimeconfig.dev.json
+C:\Users\cray4\source\repos\ChessCow\ChessCow\bin\Debug\netcoreapp3.0\ChessCow.dll
+C:\Users\cray4\source\repos\ChessCow\ChessCow\bin\Debug\netcoreapp3.0\ChessCow.pdb
+C:\Users\cray4\source\repos\ChessCow\ChessCow\obj\Debug\netcoreapp3.0\ChessCow.csproj.AssemblyReference.cache
+C:\Users\cray4\source\repos\ChessCow\ChessCow\obj\Debug\netcoreapp3.0\ChessCow.Form1.resources
+C:\Users\cray4\source\repos\ChessCow\ChessCow\obj\Debug\netcoreapp3.0\ChessCow.csproj.GenerateResource.cache
+C:\Users\cray4\source\repos\ChessCow\ChessCow\obj\Debug\netcoreapp3.0\ChessCow.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\cray4\source\repos\ChessCow\ChessCow\obj\Debug\netcoreapp3.0\ChessCow.AssemblyInfoInputs.cache
+C:\Users\cray4\source\repos\ChessCow\ChessCow\obj\Debug\netcoreapp3.0\ChessCow.AssemblyInfo.cs
+C:\Users\cray4\source\repos\ChessCow\ChessCow\obj\Debug\netcoreapp3.0\ChessCow.csproj.CoreCompileInputs.cache
+C:\Users\cray4\source\repos\ChessCow\ChessCow\obj\Debug\netcoreapp3.0\ChessCow.dll
+C:\Users\cray4\source\repos\ChessCow\ChessCow\obj\Debug\netcoreapp3.0\ChessCow.pdb
+C:\Users\cray4\source\repos\ChessCow\ChessCow\obj\Debug\netcoreapp3.0\ChessCow.genruntimeconfig.cache
