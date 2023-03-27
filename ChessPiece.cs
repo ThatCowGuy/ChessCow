@@ -16,8 +16,13 @@ namespace ChessCow2
 {
     public class ChessPiece
     {
+        // these are just for readability
+        public const bool IS_WHITE = true;
+        public const bool IS_BLACK = false;
+
         public static int count = 0;
         public bool is_white = false;
+        public bool has_moved = false;
 
         public Image rep;
         public bool alive = true;
@@ -64,19 +69,35 @@ namespace ChessCow2
         }
         public void Dispose()
         {
+            this.alive = false;
             //Dispose(true);
-            System.GC.SuppressFinalize(this);
-            ChessPiece.count--; Console.WriteLine("Piece destroyed. Count: {0}", count);
+            //System.GC.SuppressFinalize(this);
+            Console.WriteLine("My Name was {0}", this.name);
+
+            ChessPiece.count--;
+            Console.WriteLine("Piece destroyed. Count: {0}", count);
         }
-        public ChessPiece(int x, int y)
+        public ChessPiece(bool is_white, int x, int y)
         {
             this.set(x, y);
+            this.is_white = is_white;
         }
 
         public virtual List<Move> get_all_moves(ChessBoard board) { return new List<Move>(); }
 
+        public int threat_count(ChessBoard board)
+        {
+            int threats = 0;
+            foreach (Move move in board.all_legal_moves)
+            {
+                if (move.target_piece == this)
+                    threats++;
+            }
+            return threats;
+        }
+
         public void draw(Graphics g)
-        { 
+        {
             if (this.alive == true)
                 g.DrawImage(this.rep, this.personal_space);
         }
@@ -93,10 +114,14 @@ namespace ChessCow2
 
     public class Pawn : ChessPiece
     {
-        public Pawn(int x, int y)
+        public Pawn(bool is_white, int x, int y)
         {
             this.set(x, y);
-            this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_pawn.png"), 64, 64);
+            this.is_white = is_white;
+            if (this.is_white == true)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_pawn.png"), 64, 64);
+            if (this.is_white == false)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_pawn.png"), 64, 64);
             this.name = "Pawn";
         }
 
@@ -106,41 +131,28 @@ namespace ChessCow2
             Move potential_move;
 
             // for pawns, we need to differentiate between the colors
-            if (this.is_white)
-            {
-                potential_move = new Move(this, this.x, this.y + 1);
-                if (potential_move.collides_with_ally(board) == true)
-                    return moves;
-                if (potential_move.is_out_of_bounds() == false)
-                    moves.Add(potential_move);
+            int direction = +1;
+            if (this.is_white == false) direction = -1;
 
-                // pawn starter move
-                if (this.y == 1)
-                {
-                    potential_move = new Move(this, this.x, this.y + 2);
-                    if (potential_move.collides_with_ally(board) == true)
-                        return moves;
-                    if (potential_move.is_out_of_bounds() == false)
-                        moves.Add(potential_move);
-                }
-            }
-            else
-            {
-                potential_move = new Move(this, this.x, this.y - 1);
-                if (potential_move.collides_with_ally(board) == true)
-                    return moves;
-                if (potential_move.is_out_of_bounds() == false)
-                    moves.Add(potential_move);
+            potential_move = new Move(board, this, this.x - 1, this.y + 1 * direction, Move.AttackState.PURE_ATTACK);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, this.x + 1, this.y + 1 * direction, Move.AttackState.PURE_ATTACK);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
 
-                // pawn starter move
-                if (this.y == 1)
-                {
-                    potential_move = new Move(this, this.x, this.y - 2);
-                    if (potential_move.collides_with_ally(board) == true)
-                        return moves;
-                    if (potential_move.is_out_of_bounds() == false)
-                        moves.Add(potential_move);
-                }
+            potential_move = new Move(board, this, this.x, this.y + 1 * direction, Move.AttackState.PURE_MOVEMENT);
+            if (potential_move.is_legal(board) == false)
+                return moves;
+            moves.Add(potential_move);
+
+            // pawn starter move
+            if (this.has_moved == false)
+            {
+                potential_move = new Move(board, this, this.x, this.y + 2 * direction, Move.AttackState.PURE_MOVEMENT);
+                if (potential_move.is_legal(board) == false)
+                    return moves;
+                moves.Add(potential_move);
             }
 
             return moves;
@@ -148,10 +160,14 @@ namespace ChessCow2
     }
     public class Rook : ChessPiece
     {
-        public Rook (int x, int y)
+        public Rook(bool is_white, int x, int y)
         {
             this.set(x, y);
-            this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_rook.png"), 64, 64);
+            this.is_white = is_white;
+            if (this.is_white == true)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_rook.png"), 64, 64);
+            if (this.is_white == false)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_rook.png"), 64, 64);
             this.name = "Rook";
         }
 
@@ -163,31 +179,43 @@ namespace ChessCow2
             // Rook Moves are so STRAIGHT FORWARD (HAaaa) that I dont need an OOB-check
             for (int x = this.x - 1; x >= 0; x--)
             {
-                potential_move = new Move(this, x, this.y);
-                if (potential_move.collides_with_ally(board) == true)
+                potential_move = new Move(board, this, x, this.y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == false)
                     break;
                 moves.Add(potential_move);
+                // cant go through more than 1 enemy pieces
+                if (potential_move.target_piece != null)
+                    break;
             }
             for (int x = this.x + 1; x <= 7; x++)
             {
-                potential_move = new Move(this, x, this.y);
-                if (potential_move.collides_with_ally(board) == true)
+                potential_move = new Move(board, this, x, this.y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == false)
                     break;
                 moves.Add(potential_move);
+                // cant go through more than 1 enemy pieces
+                if (potential_move.target_piece != null)
+                    break;
             }
             for (int y = this.y - 1; y >= 0; y--)
             {
-                potential_move = new Move(this, this.x, y);
-                if (potential_move.collides_with_ally(board) == true)
+                potential_move = new Move(board, this, this.x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == false)
                     break;
                 moves.Add(potential_move);
+                // cant go through more than 1 enemy pieces
+                if (potential_move.target_piece != null)
+                    break;
             }
             for (int y = this.y + 1; y <= 7; y++)
             {
-                potential_move = new Move(this, this.x, y);
-                if (potential_move.collides_with_ally(board) == true)
+                potential_move = new Move(board, this, this.x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == false)
                     break;
                 moves.Add(potential_move);
+                // cant go through more than 1 enemy pieces
+                if (potential_move.target_piece != null)
+                    break;
             }
 
             return moves;
@@ -195,10 +223,14 @@ namespace ChessCow2
     }
     public class Knight : ChessPiece
     {
-        public Knight(int x, int y)
+        public Knight(bool is_white, int x, int y)
         {
             this.set(x, y);
-            this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_knight.png"), 64, 64);
+            this.is_white = is_white;
+            if (this.is_white == true)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_knight.png"), 64, 64);
+            if (this.is_white == false)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_knight.png"), 64, 64);
             this.name = "Knight";
         }
 
@@ -207,32 +239,32 @@ namespace ChessCow2
             List<Move> moves = new List<Move>();
             Move potential_move;
 
-            potential_move = new Move(this, this.x + 2, this.y + 1);
-            if (potential_move.is_out_of_bounds() == false && potential_move.collides_with_ally(board) == false)
+            potential_move = new Move(board, this, this.x + 2, this.y + 1, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(this, this.x + 1, this.y + 2);
-            if (potential_move.is_out_of_bounds() == false && potential_move.collides_with_ally(board) == false)
-                moves.Add(potential_move);
-
-            potential_move = new Move(this, this.x - 1, this.y + 2);
-            if (potential_move.is_out_of_bounds() == false && potential_move.collides_with_ally(board) == false)
-                moves.Add(potential_move);
-            potential_move = new Move(this, this.x - 2, this.y + 1);
-            if (potential_move.is_out_of_bounds() == false && potential_move.collides_with_ally(board) == false)
+            potential_move = new Move(board, this, this.x + 1, this.y + 2, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
 
-            potential_move = new Move(this, this.x - 2, this.y - 1);
-            if (potential_move.is_out_of_bounds() == false && potential_move.collides_with_ally(board) == false)
+            potential_move = new Move(board, this, this.x - 1, this.y + 2, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(this, this.x - 1, this.y - 2);
-            if (potential_move.is_out_of_bounds() == false && potential_move.collides_with_ally(board) == false)
+            potential_move = new Move(board, this, this.x - 2, this.y + 1, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
 
-            potential_move = new Move(this, this.x + 1, this.y - 2);
-            if (potential_move.is_out_of_bounds() == false && potential_move.collides_with_ally(board) == false)
+            potential_move = new Move(board, this, this.x - 2, this.y - 1, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(this, this.x + 2, this.y - 1);
-            if (potential_move.is_out_of_bounds() == false && potential_move.collides_with_ally(board) == false)
+            potential_move = new Move(board, this, this.x - 1, this.y - 2, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+
+            potential_move = new Move(board, this, this.x + 1, this.y - 2, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, this.x + 2, this.y - 1, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
 
             return moves;
@@ -240,10 +272,14 @@ namespace ChessCow2
     }
     public class Bishop : ChessPiece
     {
-        public Bishop(int x, int y)
+        public Bishop(bool is_white, int x, int y)
         {
             this.set(x, y);
-            this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_bishop.png"), 64, 64);
+            this.is_white = is_white;
+            if (this.is_white == true)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_bishop.png"), 64, 64);
+            if (this.is_white == false)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_bishop.png"), 64, 64);
             this.name = "Bishop";
         }
 
@@ -257,31 +293,43 @@ namespace ChessCow2
             // Bishop Moves are so straight forward that I dont need an OOB-check
             for (x = this.x + 1, y = this.y + 1; x <= 7 && y <= 7; x++, y++)
             {
-                potential_move = new Move(this, x, y);
-                if (potential_move.collides_with_ally(board) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == false)
                     break;
                 moves.Add(potential_move);
+                // cant go through more than 1 enemy pieces
+                if (potential_move.target_piece != null)
+                    break;
             }
             for (x = this.x - 1, y = this.y + 1; x >= 0 && y <= 7; x--, y++)
             {
-                potential_move = new Move(this, x, y);
-                if (potential_move.collides_with_ally(board) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == false)
                     break;
                 moves.Add(potential_move);
+                // cant go through more than 1 enemy pieces
+                if (potential_move.target_piece != null)
+                    break;
             }
             for (x = this.x - 1, y = this.y - 1; x >= 0 && y >= 0; x--, y--)
             {
-                potential_move = new Move(this, x, y);
-                if (potential_move.collides_with_ally(board) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == false)
                     break;
                 moves.Add(potential_move);
+                // cant go through more than 1 enemy pieces
+                if (potential_move.target_piece != null)
+                    break;
             }
-            for (x = this.x + 1, y = this.y - 1; x<= 7 && y >= 0; x++, y--)
+            for (x = this.x + 1, y = this.y - 1; x <= 7 && y >= 0; x++, y--)
             {
-                potential_move = new Move(this, x, y);
-                if (potential_move.collides_with_ally(board) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == false)
                     break;
                 moves.Add(potential_move);
+                // cant go through more than 1 enemy pieces
+                if (potential_move.target_piece != null)
+                    break;
             }
 
             return moves;
@@ -289,25 +337,23 @@ namespace ChessCow2
     }
     public class Queen : ChessPiece
     {
-        public Queen(int x, int y)
+        public Queen(bool is_white, int x, int y)
         {
             this.set(x, y);
-            this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_queen.png"), 64, 64);
+            this.is_white = is_white;
+            if (this.is_white == true)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_queen.png"), 64, 64);
+            if (this.is_white == false)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_queen.png"), 64, 64);
             this.name = "Queen";
-
-            for (int i = 0; i < 1000; i++)
-            {
-                ChessPiece dummy_rook = new Rook(this.x, this.y);
-                dummy_rook.Dispose();
-            }
         }
         public override List<Move> get_all_moves(ChessBoard board)
         {
             List<Move> moves = new List<Move>();
-            Move potential_move;
+            // Move potential_move;
 
             // add all Rook Moves
-            ChessPiece dummy_rook = new Rook(this.x, this.y);
+            ChessPiece dummy_rook = new Rook(this.is_white, this.x, this.y);
             dummy_rook.is_white = this.is_white;
             List<Move> rook_moves = dummy_rook.get_all_moves(board);
             // need to override which piece is actually moving...
@@ -319,7 +365,7 @@ namespace ChessCow2
             dummy_rook.Dispose();
 
             // add all Bishop Moves
-            ChessPiece dummy_bishop = new Bishop(this.x, this.y);
+            ChessPiece dummy_bishop = new Bishop(this.is_white, this.x, this.y);
             dummy_bishop.is_white = this.is_white;
             List<Move> bishop_moves = dummy_bishop.get_all_moves(board);
             // need to override which piece is actually moving...
@@ -335,13 +381,49 @@ namespace ChessCow2
     }
     public class King : ChessPiece
     {
-        public King(int x, int y)
+        public King(bool is_white, int x, int y)
         {
-            System.Console.WriteLine("DA BAUS\n");
-
             this.set(x, y);
-            this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_king.png"), 64, 64);
+            this.is_white = is_white;
+            if (this.is_white == true)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/white_king.png"), 64, 64);
+            if (this.is_white == false)
+                this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_king.png"), 64, 64);
             this.name = "King";
+        }
+        public override List<Move> get_all_moves(ChessBoard board)
+        {
+            List<Move> moves = new List<Move>();
+            Move potential_move;
+
+            int mov_x = this.x;
+            int mov_y = this.y;
+            potential_move = new Move(board, this, ++mov_x, mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, mov_x, ++mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, --mov_x, mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, --mov_x, mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, mov_x, --mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, mov_x, --mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, ++mov_x, mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, ++mov_x, mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+
+            return moves;
         }
     }
 }

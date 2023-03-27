@@ -1,0 +1,10 @@
+\\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\bin\Debug\ChessCow2.exe.config
+\\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\bin\Debug\ChessCow2.exe
+\\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\bin\Debug\ChessCow2.pdb
+\\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\obj\Debug\ChessCow2.csproj.AssemblyReference.cache
+\\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\obj\Debug\ChessCow2.Form1.resources
+\\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\obj\Debug\ChessCow2.Properties.Resources.resources
+\\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\obj\Debug\ChessCow2.csproj.GenerateResource.cache
+\\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\obj\Debug\ChessCow2.csproj.CoreCompileInputs.cache
+\\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\obj\Debug\ChessCow2.exe
+\\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\obj\Debug\ChessCow2.pdb
