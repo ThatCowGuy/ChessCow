@@ -22,18 +22,26 @@ namespace ChessCow2
         {
             PURE_MOVEMENT,
             PURE_ATTACK,
-            BOTH
+            BOTH,
+            PROTECTION
         };
 
         public static Image legal_move_rep = new Bitmap(Bitmap.FromFile("../../assets/legal_move.png"), 64, 64);
         public static Image attack_move_rep = new Bitmap(Bitmap.FromFile("../../assets/attack_move.png"), 64, 64);
         public static Image selector = new Bitmap(Bitmap.FromFile("../../assets/selector.png"), 64, 64);
+        public static Image check_flag = new Bitmap(Bitmap.FromFile("../../assets/check_flag.png"), 64, 64);
+        public static Image move_marker = new Bitmap(Bitmap.FromFile("../../assets/move_marker.png"), 64, 64);
 
         public ChessPiece moving_piece; // who is moving ?
         public ChessPiece target_piece; // is this move targetting someone ?
         public int target_x;
         public int target_y;
         public AttackState attack_state;
+        // these 2 are just for undoing Moves
+        public int origin_x;
+        public int origin_y;
+
+        public double eval_change = 0;
 
         public bool legal = false;
 
@@ -44,28 +52,58 @@ namespace ChessCow2
             this.target_y = y;
             this.attack_state = attack_state;
             this.calc_target_piece(board);
+            // for undoing moves
+            this.origin_x = this.moving_piece.x;
+            this.origin_y = this.moving_piece.y;
         }
 
-        public bool is_legal(ChessBoard board)
+        public bool is_legal(ChessBoard board, bool consider_selfcheck)
         {
             // out of bounds is obviously illegal
             if (this.is_out_of_bounds() == true) return false;
             // cant move to a space where your own piece is standing
-            if (this.collides_with_ally(board) == true) return false;
+            if (this.target_piece != null)
+            {
+                if (this.target_piece.is_white == this.moving_piece.is_white)
+                {
+                    // protection moves cannot be made, but they need to exist
+                    this.attack_state = AttackState.PROTECTION;
+                }
+            }
 
             if (this.attack_state == AttackState.PURE_ATTACK)
             {
                 // check if this move has an enemy target
-                if (this.target_piece != null)
-                    return true;
-                return false;
+                if (this.target_piece == null)
+                    return false;
             }
             else if (this.attack_state == AttackState.PURE_MOVEMENT)
             {
                 // check if this move bumps into another piece
                 if (board.occupation[this.target_x, this.target_y] != null)
                     return false;
-                return true;
+            }
+            // It would be A LOT Better, to pretend I am the King after sim, DO NOT EVEN get legal enemy moves,
+            // and see if the king could hit an enemy piece when moving like that enemy piece !!!
+            if (consider_selfcheck == true)
+            {
+                // and finally, check if the move results in a check for your own king
+                board.simulate_move(this, false);
+
+                bool check = false;
+                if (board.whites_turn == true)
+                {
+                    if (board.black_pieces[12].threat_count(board) > 0)
+                        check = true;
+                }
+                if (board.whites_turn == false)
+                {
+                    if (board.white_pieces[12].threat_count(board) > 0)
+                        check = true;
+                }
+                board.undo_move(this);
+                if (check == true)
+                    return false;
             }
 
             // no triggers met = legal move
@@ -99,14 +137,9 @@ namespace ChessCow2
                 this.target_piece = null;
                 return;
             }
-            // if there is a piece of the OTHER color, we collide with an enemy
-            if (target_space.is_white != this.moving_piece.is_white)
-            {
-                this.target_piece = target_space;
-                return;
-            }
-            // else, we don't
-            this.target_piece = null;
+
+            this.target_piece = target_space;
+            return;
         }
         public bool is_out_of_bounds()
         {

@@ -46,6 +46,65 @@ namespace ChessCow2
 
             this.board.process_click(tile_x, tile_y);
             this.ChessBoardPanel.Refresh();
+            // also redraw some GUI stuff
+            label1.Refresh();
+
+            if (this.board.whites_turn == false)
+            {
+                Bot.depth = 0;
+                this.board.play_move(Bot.get_best_move(this.board));
+                this.ChessBoardPanel.Refresh();
+                // also redraw some GUI stuff
+                label1.Refresh();
+            }
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Paint(object sender, PaintEventArgs e)
+        {
+            if (board.gamestate == ChessBoard.GameState.ONGOING)
+            {
+                if (board.whites_turn == true)
+                {
+                    label1.Text = "White to Play";
+                    label1.BackColor = Color.FromArgb(255, 255, 255, 255);
+                }
+                else
+                {
+                    label1.Text = "Black to Play";
+                    label1.BackColor = Color.FromArgb(255, 155, 155, 155);
+                }
+            }
+            else if (board.gamestate == ChessBoard.GameState.WHITE_CHECKMATE)
+            {
+                label1.Text = "Checkmate!";
+                label1.BackColor = Color.FromArgb(255, 255, 155, 155);
+            }
+            else if (board.gamestate == ChessBoard.GameState.BLACK_CHECKMATE)
+            {
+                label1.Text = "Checkmate!";
+                label1.BackColor = Color.FromArgb(255, 255, 155, 155);
+            }
+            else if (board.gamestate == ChessBoard.GameState.STALEMATE)
+            {
+                label1.Text = "Stalemate";
+                label1.BackColor = Color.FromArgb(255, 155, 155, 155);
+            }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void None_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
