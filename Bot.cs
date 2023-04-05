@@ -64,7 +64,7 @@ namespace ChessCow2
             double max_eval_change = -100000;
             foreach (Move move in current_moves)
             {
-                board.simulate_move(move, true);
+                board.play_move_silent(move);
                 double current_eval = evaluate_position(board, !board.whites_turn);
 
                 if (depth > 0)
@@ -74,7 +74,7 @@ namespace ChessCow2
                     if (best_counter_moves.Count > 0)
                     {
                         // I really should test every best move here.. or actually every-every move...
-                        board.simulate_move(best_counter_moves.ElementAt(0), true);
+                        board.play_move_silent(best_counter_moves.ElementAt(0));
                         // NOTE: using NOT whites turn here
                         current_eval = evaluate_position(board, board.whites_turn);
 
@@ -82,18 +82,17 @@ namespace ChessCow2
                     }
                     else
                     {
-                        Console.WriteLine("Move: {0} => {1}|{2} == {3}", move.moving_piece.name, move.target_x, move.target_y, move.eval_change);
-                        Console.WriteLine("this moves results in a game end");
+                        Console.WriteLine(move.ToString() + "-> Results in a Game-Over");
                         if (board.whites_turn == true)
                         {
-                            if (board.checking_white_king() == true)
+                            if (board.white_pieces[ChessPiece.KING].is_checked(board) == true)
                                 current_eval = 10000;
                             else
                                 current_eval = 0;
                         }
                         if (board.whites_turn == false)
                         {
-                            if (board.checking_black_king() == true)
+                            if (board.black_pieces[ChessPiece.KING].is_checked(board) == true)
                                 current_eval = 10000;
                             else
                                 current_eval = 0;
@@ -108,7 +107,7 @@ namespace ChessCow2
 
                 if (depth == Bot.depth)
                 {
-                    Console.WriteLine("Move: {0} => {1}|{2} == {3}", move.moving_piece.name, move.target_x, move.target_y, move.eval_change);
+                    Console.WriteLine("{0} -- EvalChange: {1}", move.ToString(), move.eval_change);
                     if (move.eval_change > Bot.current_best_eval_change)
                     {
                         Bot.current_best_eval_change = move.eval_change;
@@ -117,7 +116,7 @@ namespace ChessCow2
                 }
             }
             if (depth == Bot.depth)
-                Console.WriteLine("BEST = {0}", max_eval_change);
+                Console.WriteLine(">>> BEST = {0}", max_eval_change);
 
             List<Move> best_moves = new List<Move>();
             foreach (Move move in current_moves)
@@ -128,17 +127,21 @@ namespace ChessCow2
             return best_moves;
         }
 
+        public static double MULT_threat_self = 0.4;
+        public static double MULT_threat_opponent = 0.6;
+
+        public static double MULT_take_pieces = 5.0;
+        public static double MULT_lose_pieces = 5.0;
+
+        public static double MULT_board_control_self = 0.07;
+        public static double MULT_board_control_opponent = 0.05;
+        public static double MULT_board_protection_mod = 0.5;
+
         public static double evaluate_position(ChessBoard board, bool for_white)
         {
             double value = 0;
             // I remove value from a move that threatens myself
             // and from moves that result in me having less pieces..
-
-            double MULT_threat_self = 0.4;
-            double MULT_threat_opponent = 0.6;
-
-            double MULT_take_pieces = 5.0;
-            double MULT_lose_pieces = 5.0;
 
             if (for_white == true)
             {
@@ -147,6 +150,9 @@ namespace ChessCow2
 
                 value += board.total_piece_value_white() * MULT_take_pieces;
                 value -= board.total_piece_value_black() * MULT_lose_pieces;
+
+                value += board.space_control_evaluation(true, MULT_board_protection_mod) * MULT_board_control_self;
+                value -= board.space_control_evaluation(false, MULT_board_protection_mod) * MULT_board_control_opponent;
 
                 // opponent in checkmate
                 if (board.whites_turn == false && board.black_legal_moves.Count == 0 && board.checking_black_king() == true)
@@ -162,6 +168,9 @@ namespace ChessCow2
 
                 value += board.total_piece_value_black() * MULT_take_pieces;
                 value -= board.total_piece_value_white() * MULT_lose_pieces;
+
+                value += board.space_control_evaluation(false, MULT_board_protection_mod) * MULT_board_control_self;
+                value -= board.space_control_evaluation(true, MULT_board_protection_mod) * MULT_board_control_opponent;
 
                 // opponent in checkmate
                 if (board.whites_turn == true && board.white_legal_moves.Count == 0 && board.checking_white_king() == true)

@@ -17,11 +17,11 @@ namespace ChessCow2
     public class Move : IEquatable<Move>
     {
         // these are just for readability
-        // (only the Pawn needs these)
         public enum AttackState
         {
             PURE_MOVEMENT,
             PURE_ATTACK,
+            PURE_CONTROL,
             BOTH,
             PROTECTION
         };
@@ -31,6 +31,7 @@ namespace ChessCow2
         public static Image selector = new Bitmap(Bitmap.FromFile("../../assets/selector.png"), 64, 64);
         public static Image check_flag = new Bitmap(Bitmap.FromFile("../../assets/check_flag.png"), 64, 64);
         public static Image move_marker = new Bitmap(Bitmap.FromFile("../../assets/move_marker.png"), 64, 64);
+        public static Image en_passant_target = new Bitmap(Bitmap.FromFile("../../assets/en_passant.png"), 64, 64);
 
         public ChessPiece moving_piece; // who is moving ?
         public ChessPiece target_piece; // is this move targetting someone ?
@@ -40,6 +41,12 @@ namespace ChessCow2
         // these 2 are just for undoing Moves
         public int origin_x;
         public int origin_y;
+
+        // pawns will set this to true if they move 2 spaces at once
+        public bool enable_en_passant;
+        // moves might disable an existing en passant, but they need to remember where
+        public int disabled_en_passant_x;
+        public int disabled_en_passant_y;
 
         public double eval_change = 0;
 
@@ -55,15 +62,37 @@ namespace ChessCow2
             // for undoing moves
             this.origin_x = this.moving_piece.x;
             this.origin_y = this.moving_piece.y;
+
+            this.enable_en_passant = false;
+            this.disabled_en_passant_x = -1;
+            this.disabled_en_passant_y = -1;
         }
 
-        public bool is_legal(ChessBoard board, bool consider_selfcheck)
+        public override string ToString()
+        {
+            // convert x to ascii {a-h}
+            char file = (char)(this.target_x + 97);
+            // and convert y to row int
+            int row = (this.target_y + 1);
+
+            if (this.target_piece == null)
+                return string.Format("Move: {0} -> ({1}{2})", this.moving_piece.name, file, row);
+
+            return string.Format("Move: {0} xx ({1}{2})", this.moving_piece.name, file, row);
+        }
+
+        public bool is_legal(ChessBoard board)
         {
             // out of bounds is obviously illegal
             if (this.is_out_of_bounds() == true) return false;
+
             // cant move to a space where your own piece is standing
             if (this.target_piece != null)
             {
+                // only pawns can take en passant
+                if (this.target_piece.ID == ChessPiece.EN_PASS_ID && this.moving_piece.ID != ChessPiece.PAWN_ID)
+                    return false;
+
                 if (this.target_piece.is_white == this.moving_piece.is_white)
                 {
                     // protection moves cannot be made, but they need to exist
@@ -73,9 +102,12 @@ namespace ChessCow2
 
             if (this.attack_state == AttackState.PURE_ATTACK)
             {
-                // check if this move has an enemy target
+                // check if this move has an enemy target; if it doesnt, this is
+                // a pure control move (illegal, but gives player more control)
                 if (this.target_piece == null)
-                    return false;
+                {
+                    this.attack_state = AttackState.PURE_CONTROL;
+                }
             }
             else if (this.attack_state == AttackState.PURE_MOVEMENT)
             {
@@ -83,28 +115,24 @@ namespace ChessCow2
                 if (board.occupation[this.target_x, this.target_y] != null)
                     return false;
             }
-            // It would be A LOT Better, to pretend I am the King after sim, DO NOT EVEN get legal enemy moves,
-            // and see if the king could hit an enemy piece when moving like that enemy piece !!!
-            if (consider_selfcheck == true)
-            {
-                // and finally, check if the move results in a check for your own king
-                board.simulate_move(this, false);
 
-                bool check = false;
-                if (board.whites_turn == true)
-                {
-                    if (board.black_pieces[12].threat_count(board) > 0)
-                        check = true;
-                }
-                if (board.whites_turn == false)
-                {
-                    if (board.white_pieces[12].threat_count(board) > 0)
-                        check = true;
-                }
-                board.undo_move(this);
-                if (check == true)
-                    return false;
+            // and finally, check if the move results in a check for your own king
+            board.simulate_move(this);
+
+            bool check = false;
+            if (board.whites_turn == true)
+            {
+                if (board.black_pieces[ChessPiece.KING].is_checked(board) == true)
+                    check = true;
             }
+            if (board.whites_turn == false)
+            {
+                if (board.white_pieces[ChessPiece.KING].is_checked(board) == true)
+                    check = true;
+            }
+            board.undo_simulation(this);
+            if (check == true)
+                return false;
 
             // no triggers met = legal move
             return true;

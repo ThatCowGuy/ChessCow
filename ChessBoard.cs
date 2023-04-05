@@ -25,16 +25,28 @@ namespace ChessCow2
         public ChessPiece[] black_pieces;
         public ChessPiece[,] occupation;
         public ChessPiece selected_piece;
+        public EnPassantTarget en_passant_target;
 
         public Move last_played_move = null;
 
         public List<Move> piece_legal_moves = new List<Move>();
         public List<Move> white_legal_moves = new List<Move>();
         public List<Move> black_legal_moves = new List<Move>();
+
         public List<Move> white_protect_moves = new List<Move>();
         public List<Move> black_protect_moves = new List<Move>();
+
+        public List<Move> white_control_moves = new List<Move>();
+        public List<Move> black_control_moves = new List<Move>();
+
         public List<Move> white_old_legal_moves = new List<Move>();
         public List<Move> black_old_legal_moves = new List<Move>();
+
+        public List<Move> white_old_protect_moves = new List<Move>();
+        public List<Move> black_old_protect_moves = new List<Move>();
+
+        public List<Move> white_old_control_moves = new List<Move>();
+        public List<Move> black_old_control_moves = new List<Move>();
 
         public static int xdim = 8;
         public static int ydim = 8;
@@ -63,6 +75,8 @@ namespace ChessCow2
 
         public ChessPiece get_occupation(int tile_x, int tile_y)
         {
+            if (tile_x < 0 || tile_x >= 8) return null;
+            if (tile_y < 0 || tile_y >= 8) return null;
             return this.occupation[tile_x, tile_y];
         }
 
@@ -113,38 +127,28 @@ namespace ChessCow2
                 this.occupation[x, y] = this.black_pieces[index];
             }
 
-            this.calc_legal_moves(true);
+            // fake en passant target for easier access
+            this.en_passant_target = new EnPassantTarget(ChessPiece.IS_WHITE, 0, 0);
+            this.en_passant_target.alive = false;
+
+            this.calc_legal_moves();
         }
 
-        public List<Move> get_all_moves(bool for_white, bool consider_selfcheck)
+        public List<Move> get_all_moves(bool for_white)
         {
             List<Move> moves = new List<Move>();
 
             if (for_white == true)
             {
-                for (int i = 0; i < 8; i++)
-                    moves.AddRange(Pawn.get_all_moves(this, this.white_pieces[i], consider_selfcheck));
-                moves.AddRange(Rook.get_all_moves(this, this.white_pieces[8], consider_selfcheck));
-                moves.AddRange(Knight.get_all_moves(this, this.white_pieces[9], consider_selfcheck));
-                moves.AddRange(Bishop.get_all_moves(this, this.white_pieces[10], consider_selfcheck));
-                moves.AddRange(Queen.get_all_moves(this, this.white_pieces[11], consider_selfcheck));
-                moves.AddRange(King.get_all_moves(this, this.white_pieces[12], consider_selfcheck));
-                moves.AddRange(Bishop.get_all_moves(this, this.white_pieces[13], consider_selfcheck));
-                moves.AddRange(Knight.get_all_moves(this, this.white_pieces[14], consider_selfcheck));
-                moves.AddRange(Rook.get_all_moves(this, this.white_pieces[15], consider_selfcheck));
+                for (int i = 0; i < 16; i++)
+                    if (this.white_pieces[i].alive == true)
+                        moves.AddRange(this.white_pieces[i].get_all_moves(this));
             }
             if (for_white == false)
             {
-                for (int i = 0; i < 8; i++)
-                    moves.AddRange(Pawn.get_all_moves(this, this.black_pieces[i], consider_selfcheck));
-                moves.AddRange(Rook.get_all_moves(this, this.black_pieces[8], consider_selfcheck));
-                moves.AddRange(Knight.get_all_moves(this, this.black_pieces[9], consider_selfcheck));
-                moves.AddRange(Bishop.get_all_moves(this, this.black_pieces[10], consider_selfcheck));
-                moves.AddRange(Queen.get_all_moves(this, this.black_pieces[11], consider_selfcheck));
-                moves.AddRange(King.get_all_moves(this, this.black_pieces[12], consider_selfcheck));
-                moves.AddRange(Bishop.get_all_moves(this, this.black_pieces[13], consider_selfcheck));
-                moves.AddRange(Knight.get_all_moves(this, this.black_pieces[14], consider_selfcheck));
-                moves.AddRange(Rook.get_all_moves(this, this.black_pieces[15], consider_selfcheck));
+                for (int i = 0; i < 16; i++)
+                    if (this.black_pieces[i].alive == true)
+                        moves.AddRange(this.black_pieces[i].get_all_moves(this));
             }
             return moves;
         }
@@ -174,37 +178,52 @@ namespace ChessCow2
             return piece_moves;
         }
 
-        public void calc_legal_moves(bool consider_selfcheck)
+        public void calc_legal_moves()
         {
-            this.black_old_legal_moves = this.black_legal_moves;
             this.white_old_legal_moves = this.white_legal_moves;
+            this.black_old_legal_moves = this.black_legal_moves;
+            this.white_old_protect_moves = this.white_protect_moves;
+            this.black_old_protect_moves = this.black_protect_moves;
+            this.white_old_control_moves = this.white_control_moves;
+            this.black_old_control_moves = this.black_control_moves;
 
-            this.white_legal_moves = this.get_all_moves(true, consider_selfcheck);
-            this.black_legal_moves = this.get_all_moves(false, consider_selfcheck);
+            this.white_legal_moves = this.get_all_moves(true);
+            this.black_legal_moves = this.get_all_moves(false);
 
             this.white_protect_moves = new List<Move>();
+            this.white_control_moves = new List<Move>();
             foreach (Move move in this.white_legal_moves)
             {
                 if (move.attack_state == Move.AttackState.PROTECTION)
                     this.white_protect_moves.Add(move);
+                else if (move.attack_state == Move.AttackState.PURE_CONTROL)
+                    this.white_control_moves.Add(move);
             }
             this.white_legal_moves.RemoveAll(o => o.attack_state == Move.AttackState.PROTECTION);
+            this.white_legal_moves.RemoveAll(o => o.attack_state == Move.AttackState.PURE_CONTROL);
 
             this.black_protect_moves = new List<Move>();
+            this.black_control_moves = new List<Move>();
             foreach (Move move in this.black_legal_moves)
             {
                 if (move.attack_state == Move.AttackState.PROTECTION)
                     this.black_protect_moves.Add(move);
+                else if (move.attack_state == Move.AttackState.PURE_CONTROL)
+                    this.black_control_moves.Add(move);
             }
             this.black_legal_moves.RemoveAll(o => o.attack_state == Move.AttackState.PROTECTION);
-
-            //this.white_legal_moves = this.white_legal_moves.OrderBy(o => o.value).ToList();
-            //this.black_legal_moves = this.black_legal_moves.OrderBy(o => o.value).ToList();
+            this.black_legal_moves.RemoveAll(o => o.attack_state == Move.AttackState.PURE_CONTROL);
         }
         public void restore_legal_moves()
         {
-            this.black_legal_moves = this.black_old_legal_moves;
             this.white_legal_moves = this.white_old_legal_moves;
+            this.black_legal_moves = this.black_old_legal_moves;
+
+            this.white_protect_moves = this.white_old_protect_moves;
+            this.black_protect_moves = this.black_old_protect_moves;
+
+            this.white_control_moves = this.white_old_control_moves;
+            this.black_control_moves = this.black_old_control_moves;
         }
 
 
@@ -255,6 +274,62 @@ namespace ChessCow2
             }
         }
 
+        public double space_control_evaluation(bool for_white, double protection_mod)
+        {
+            double[] control_matrix = new double[64];
+
+            List<Move> legal_moves;
+            List<Move> protect_moves;
+            List<Move> control_moves;
+            if (for_white == true)
+            {
+                legal_moves = this.white_legal_moves;
+                protect_moves = this.white_protect_moves;
+                control_moves = this.white_control_moves;
+            }
+            else //if (for_white == false)
+            {
+                legal_moves = this.black_legal_moves;
+                protect_moves = this.black_protect_moves;
+                control_moves = this.black_control_moves;
+            }
+
+            // first, count everything white has as a positive
+            foreach (Move move in control_moves)
+            {
+                // Console.WriteLine("CONTROL {0}", move.ToString());
+                int target = (move.target_x + (move.target_y * 8));
+
+                if (control_matrix[target] == 0)
+                    control_matrix[target] += 1.0;
+                else
+                    control_matrix[target] += protection_mod;
+            }
+            foreach (Move move in legal_moves)
+            {
+                // this doesnt control shit
+                if (move.attack_state == Move.AttackState.PURE_MOVEMENT) continue;
+
+                // Console.WriteLine("LEGAL {0}", move.ToString());
+
+                int target = (move.target_x + (move.target_y * 8));
+
+                if (control_matrix[target] == 0)
+                    control_matrix[target] += 1.0;
+                else
+                    control_matrix[target] += protection_mod;
+            }
+            foreach (Move move in protect_moves)
+            {
+                // Console.WriteLine("PROTECT {0}", move.ToString());
+                int target = (move.target_x + (move.target_y * 8));
+
+                control_matrix[target] += protection_mod;
+            }
+
+            return control_matrix.Sum();
+        }
+
         public double total_threat_level_white()
         {
             double total_threat_level = 0;
@@ -299,19 +374,23 @@ namespace ChessCow2
 
         public void play_move(Move move)
         {
+            // test for empty move
+            if (move == null) return;
+
             // some outputs
-            Console.WriteLine("Playing {0} to {1}|{2}", move.moving_piece.name, move.target_x, move.target_y);
+            Console.WriteLine("Playing {0}...", move.ToString());
             if (move.target_piece != null)
             {
-                Console.WriteLine(">>> Disposing of Piece: {0}", move.target_piece.name);
+                Console.WriteLine("~~~ Disposing of Piece: {0}", move.target_piece.name);
                 //move.target_piece.alive = false; -- this happens in execute_move() already
             }
+            Console.WriteLine("");
 
             this.execute_move(move);
             this.last_played_move = move;
 
             // and update the legal moves array
-            this.calc_legal_moves(true);
+            this.calc_legal_moves();
 
             // check if the next player can even move
             if (whites_turn == true)
@@ -336,12 +415,21 @@ namespace ChessCow2
             }
         }
 
-        public void simulate_move(Move move, bool consider_selfcheck)
+        public void simulate_move(Move move)
+        {
+            this.execute_move(move);
+        }
+        public void play_move_silent(Move move)
         {
             this.execute_move(move);
 
             // and update the legal moves array
-            this.calc_legal_moves(consider_selfcheck);
+            this.calc_legal_moves();
+        }
+
+        public ChessPiece get_piece_at(int x, int y)
+        {
+            return this.occupation[x, y];
         }
 
         // this LITERALLY only executes the move; NO legality checks prior or afterwards,
@@ -354,15 +442,30 @@ namespace ChessCow2
                 return;
             }
 
+            if (move.target_piece == this.en_passant_target)
+            {
+                Console.WriteLine("EN PASSANT !");
+                // this effectively kills off the en passanted pawn
+                this.occupation[this.en_passant_target.x, this.en_passant_target.y].alive = false;
+            }
+
+            // always clear out old en passant targets first
+            if (this.en_passant_target.alive == true)
+            {
+                // remember the disabled en passant location
+                move.disabled_en_passant_x = this.en_passant_target.x;
+                move.disabled_en_passant_y = this.en_passant_target.y;
+
+                this.occupation[en_passant_target.x, en_passant_target.y] = null;
+                this.en_passant_target.alive = false;
+            }
+
             // clear old occupation
             this.occupation[move.moving_piece.x, move.moving_piece.y] = null;
 
             // check if we are taking a piece and remove it if so
             if (move.target_piece != null)
             {
-                // Console.WriteLine("Disposing of Piece...");
-                if (whites_turn == true)
-                    Console.WriteLine("HUA");
                 move.target_piece.alive = false;
             }
 
@@ -372,6 +475,20 @@ namespace ChessCow2
             // and update the new occupation
             this.occupation[move.moving_piece.x, move.moving_piece.y] = move.moving_piece;
 
+            if (move.enable_en_passant == true)
+            {
+                this.en_passant_target.alive = true;
+                this.en_passant_target.is_white = this.whites_turn;
+
+                if (move.moving_piece.is_white == true)
+                    this.en_passant_target.set(move.moving_piece.x, 2);
+                if (move.moving_piece.is_white == false)
+                    this.en_passant_target.set(move.moving_piece.x, 5);
+
+                // additional reference to the correct moving pawn
+                this.occupation[this.en_passant_target.x, this.en_passant_target.y] = en_passant_target;
+            }
+
             // change whose turn it is
             this.whites_turn = !this.whites_turn;
         }
@@ -379,6 +496,32 @@ namespace ChessCow2
 
         public void undo_move(Move move)
         {
+            if (move.enable_en_passant == true)
+            {
+                this.occupation[this.en_passant_target.x, this.en_passant_target.y] = null;
+                this.en_passant_target.alive = false;
+            }
+            // see if this move disabled an en passant, and re-enable it if so
+            if (move.disabled_en_passant_x >= 0)
+            {
+                this.en_passant_target.set(move.disabled_en_passant_x, move.disabled_en_passant_y);
+                this.en_passant_target.alive = true;
+
+                if (this.en_passant_target.y == 2) // basically, if en_passant_target.is_white == true
+                {
+                    // I can use the en passant Y coord to index into the correct pawn
+                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = white_pieces[this.en_passant_target.x];
+                }
+                else if (this.en_passant_target.y == 5) // basically, if en_passant_target.is_white == false
+                {
+                    // I can use the en passant Y coord to index into the correct pawn
+                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = black_pieces[this.en_passant_target.x];
+                }
+
+                // the old en passant target had the opposite color of the current turn holder
+                this.en_passant_target.is_white = !this.whites_turn;
+            }
+
             // check if we took a piece and reinstate it if so
             if (move.target_piece != null)
             {
@@ -398,6 +541,48 @@ namespace ChessCow2
             this.whites_turn = !this.whites_turn;
             // and update the legal moves array
             this.restore_legal_moves();
+        }
+        public void undo_simulation(Move move)
+        {
+            if (move.enable_en_passant == true)
+            {
+                this.occupation[this.en_passant_target.x, this.en_passant_target.y] = null;
+                this.en_passant_target.alive = false;
+            }
+            // see if this move disabled an en passant, and re-enable it if so
+            if (move.disabled_en_passant_x >= 0)
+            {
+                this.en_passant_target.set(move.disabled_en_passant_x, move.disabled_en_passant_y);
+                this.en_passant_target.alive = true;
+
+                if (this.en_passant_target.y == 2) // basically, if en_passant_target.is_white == true
+                {
+                    // I can use the en passant Y coord to index into the correct pawn
+                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = white_pieces[this.en_passant_target.x];
+                }
+                else if (this.en_passant_target.y == 5) // basically, if en_passant_target.is_white == false
+                {
+                    // I can use the en passant Y coord to index into the correct pawn
+                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = black_pieces[this.en_passant_target.x];
+                }
+            }
+            // check if we took a piece and reinstate it if so
+            if (move.target_piece != null)
+            {
+                //Console.WriteLine("Disposing of Piece...");
+                move.target_piece.alive = true;
+            }
+            // this is the correct thing to do, even if target_piece == NULL
+            this.occupation[move.target_x, move.target_y] = move.target_piece;
+
+            // set old position
+            move.moving_piece.set(move.origin_x, move.origin_y);
+            move.moving_piece.move_count--;
+            // and update the new occupation
+            this.occupation[move.origin_x, move.origin_y] = move.moving_piece;
+
+            // change whose turn it is
+            this.whites_turn = !this.whites_turn;
         }
 
 
@@ -448,7 +633,9 @@ namespace ChessCow2
                 this.white_pieces[i].draw(g);
                 this.black_pieces[i].draw(g);
             }
-
+            // draw a ghost for en passant !
+            if (this.en_passant_target.alive == true)
+                g.DrawImage(Move.en_passant_target, index_to_rect(this.en_passant_target.x, this.en_passant_target.y));
 
 
 
@@ -467,6 +654,7 @@ namespace ChessCow2
                     g.DrawImage(Move.legal_move_rep, index_to_rect(move.target_x, move.target_y));
                 // AttackState.PROTECTION is obviously ignored
             }
+
             // draw a selector around the selected piece
             if (this.piece_selected == true)
                 g.DrawImage(Move.selector, index_to_rect(this.selected_piece.x, this.selected_piece.y));
@@ -475,9 +663,9 @@ namespace ChessCow2
             g.DrawRectangle(pen, 0, 0, full_w, full_h);
 
             // draw cute check flags
-            if (this.checking_white_king() == true)
+            if (this.white_pieces[ChessPiece.KING].is_checked(this) == true)
                 g.DrawImage(Move.check_flag, index_to_rect(this.white_pieces[12].x, this.white_pieces[12].y));
-            if (this.checking_black_king() == true)
+            if (this.black_pieces[ChessPiece.KING].is_checked(this) == true)
                 g.DrawImage(Move.check_flag, index_to_rect(this.black_pieces[12].x, this.black_pieces[12].y));
 
             if (this.last_played_move != null)

@@ -23,6 +23,7 @@ namespace ChessCow2
         public Form1()
         {
             InitializeComponent();
+            update_textboxes();
         }
 
         private void ChessBoardPanel_Paint(object sender, PaintEventArgs e)
@@ -32,6 +33,30 @@ namespace ChessCow2
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
             this.board.draw(g);
+        }
+
+        public void update_textboxes()
+        {
+            this.textBox1.Text = string.Format("{0}", this.board.total_piece_value_white());
+            this.textBox1.Refresh();
+
+            // I want to display the threat that white exerts
+            this.textBox2.Text = string.Format("{0}", this.board.total_threat_level_black());
+            this.textBox2.Refresh();
+
+            this.textBox3.Text = string.Format("{0}", this.board.space_control_evaluation(true, Bot.MULT_board_protection_mod));
+            this.textBox3.Refresh();
+
+
+
+            this.textBox6.Text = string.Format("{0}", this.board.total_piece_value_black());
+            this.textBox6.Refresh();
+
+            this.textBox5.Text = string.Format("{0}", this.board.total_threat_level_white());
+            this.textBox5.Refresh();
+
+            this.textBox4.Text = string.Format("{0}", this.board.space_control_evaluation(false, Bot.MULT_board_protection_mod));
+            this.textBox4.Refresh();
         }
 
         private void ChessBoardPanel_MouseClick(object sender, MouseEventArgs e)
@@ -48,16 +73,17 @@ namespace ChessCow2
             this.ChessBoardPanel.Refresh();
             // also redraw some GUI stuff
             label1.Refresh();
+            update_textboxes();
 
-            if (this.board.whites_turn == false)
+            if (this.board.whites_turn == false && false)
             {
-                Bot.depth = 0;
+                Bot.depth = 2;
                 this.board.play_move(Bot.get_best_move(this.board));
                 this.ChessBoardPanel.Refresh();
                 // also redraw some GUI stuff
                 label1.Refresh();
+                update_textboxes();
             }
-
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -105,6 +131,24 @@ namespace ChessCow2
         private void None_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void ChessBoardPanel_MouseHover(object sender, EventArgs e)
+        {
+            Point rel_pos = ChessBoardPanel.PointToClient(Cursor.Position);
+
+            int tile_x = (rel_pos.X - ChessBoard.boarder_w) / ChessBoard.tile_w;
+            int tile_y = (rel_pos.Y - ChessBoard.boarder_w) / ChessBoard.tile_h;
+            if (tile_x < 0 || tile_x > 7) return;
+            if (tile_y < 0 || tile_y > 7) return;
+
+            // flip y so that 0 is at the bottom
+            tile_y = 7 - tile_y;
+
+            ChessPiece hover_piece = this.board.get_piece_at(tile_x, tile_y);
+
+            if (hover_piece != null)
+                Console.WriteLine("Hovering over {0} on ({1}|{2})...", hover_piece.name, tile_x, tile_y);
         }
     }
 }

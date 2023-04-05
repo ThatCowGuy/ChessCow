@@ -18,6 +18,17 @@ namespace ChessCow2
     {
         public const int KING = 12;
 
+        // piece ID is a bitfield that tells the piece type
+        // (faster than string)
+        public const int PAWN_ID    = 0b00000001;
+        public const int ROOK_ID    = 0b00000010;
+        public const int KNIGHT_ID  = 0b00000100;
+        public const int BISHOP_ID  = 0b00001000;
+        public const int KING_ID    = 0b00010000;
+        public const int QUEEN_ID   = 0b00100000;
+        public const int EN_PASS_ID = 0b01000000;
+        public int ID;
+
         // these are just for readability
         public const bool IS_WHITE = true;
         public const bool IS_BLACK = false;
@@ -75,10 +86,9 @@ namespace ChessCow2
             this.alive = false;
             //Dispose(true);
             //System.GC.SuppressFinalize(this);
-            Console.WriteLine("My Name was {0}", this.name);
 
             ChessPiece.count--;
-            Console.WriteLine("Piece destroyed. Count: {0}", count);
+            Console.WriteLine("{0} destroyed. Count: {1}", this.name, count);
         }
         public ChessPiece(bool is_white, int x, int y)
         {
@@ -86,7 +96,7 @@ namespace ChessCow2
             this.is_white = is_white;
         }
 
-        // public virtual List<Move> get_all_moves(ChessBoard board, ChessPiece mover, bool consider_selfcheck) { return new List<Move>(); }
+        public virtual List<Move> get_all_moves(ChessBoard board) { return new List<Move>(); }
 
         public int threat_count(ChessBoard board)
         {
@@ -194,6 +204,216 @@ namespace ChessCow2
             if (y > 7) return true;
             return false;
         }
+
+        public bool is_checked(ChessBoard board)
+        {
+            // placeholder
+            ChessPiece piece = null;
+
+            // first, we check ROOK, QUEEN and KING threats from up down left right
+            for (int y = this.y + 1; y < 8; y++)
+            {
+                piece = board.occupation[this.x, y];
+                if (piece == null) continue;
+                if (piece.is_white == this.is_white) break;
+
+                // first step, check for enemy king
+                if (y == this.y + 1)
+                {
+                    if ((piece.ID & ChessPiece.KING_ID) > 0)
+                        return true;
+                }
+                if ((piece.ID & (ChessPiece.ROOK_ID | ChessPiece.QUEEN_ID)) > 0)
+                    return true;
+
+                // if we get here, we have found an opponent piece that does not
+                // threaten us, but blocks any threats comming from this direction
+                // so we can stop looking here
+                break;
+            }
+            for (int y = this.y - 1; y >= 0; y--)
+            {
+                piece = board.occupation[this.x, y];
+                if (piece == null) continue;
+                if (piece.is_white == this.is_white) break;
+
+                if (y == this.y - 1)
+                {
+                    if ((piece.ID & ChessPiece.KING_ID) > 0)
+                        return true;
+                }
+                if ((piece.ID & (ChessPiece.ROOK_ID | ChessPiece.QUEEN_ID)) > 0)
+                    return true;
+
+                break;
+            }
+            for (int x = this.x - 1; x >= 0; x--)
+            {
+                piece = board.occupation[x, this.y];
+                if (piece == null) continue;
+                if (piece.is_white == this.is_white) break;
+
+                if (x == this.x - 1)
+                {
+                    if ((piece.ID & ChessPiece.KING_ID) > 0)
+                        return true;
+                }
+                if ((piece.ID & (ChessPiece.ROOK_ID | ChessPiece.QUEEN_ID)) > 0)
+                    return true;
+
+                break;
+            }
+            for (int x = this.x + 1; x < 8; x++)
+            {
+                piece = board.occupation[x, this.y];
+                if (piece == null) continue;
+                if (piece.is_white == this.is_white) break;
+
+                if (x == this.x + 1)
+                {
+                    if ((piece.ID & ChessPiece.KING_ID) > 0)
+                        return true;
+                }
+                if ((piece.ID & (ChessPiece.ROOK_ID | ChessPiece.QUEEN_ID)) > 0)
+                    return true;
+
+                break;
+            }
+
+            // now the diagonals, checking QUEEN, BISHOP, KING and PAWN
+            for (int x = this.x + 1, y = this.y + 1; (x < 8 && y < 8); x++, y++)
+            {
+                piece = board.occupation[x, y];
+                if (piece == null) continue;
+                if (piece.is_white == this.is_white) break;
+
+                // first step, check for enemy king (1 coord is enough)
+                if (x == this.x + 1)
+                {
+                    if ((piece.ID & ChessPiece.KING_ID) > 0)
+                        return true;
+
+                    // extra pawn check (only for white king)
+                    if (this.is_white == true)
+                        if ((piece.ID & ChessPiece.PAWN_ID) > 0)
+                            return true;
+                }
+                if ((piece.ID & (ChessPiece.BISHOP_ID | ChessPiece.QUEEN_ID)) > 0)
+                    return true;
+
+                // if we get here, we have found an opponent piece that does not
+                // threaten us, but blocks any threats comming from this direction
+                // so we can stop looking here
+                break;
+            }
+            for (int x = this.x - 1, y = this.y + 1; (x >= 0 && y < 8); x--, y++)
+            {
+                piece = board.occupation[x, y];
+                if (piece == null) continue;
+                if (piece.is_white == this.is_white) break;
+
+                if (x == this.x - 1)
+                {
+                    if ((piece.ID & ChessPiece.KING_ID) > 0)
+                        return true;
+
+                    // extra pawn check (only for white king)
+                    if (this.is_white == true)
+                        if ((piece.ID & ChessPiece.PAWN_ID) > 0)
+                            return true;
+                }
+                if ((piece.ID & (ChessPiece.BISHOP_ID | ChessPiece.QUEEN_ID)) > 0)
+                    return true;
+
+                break;
+            }
+            for (int x = this.x - 1, y = this.y - 1; (x >= 0 && y >= 0); x--, y--)
+            {
+                piece = board.occupation[x, y];
+                if (piece == null) continue;
+                if (piece.is_white == this.is_white) break;
+
+                if (x == this.x - 1)
+                {
+                    if ((piece.ID & ChessPiece.KING_ID) > 0)
+                        return true;
+
+                    // extra pawn check (only for black king)
+                    if (this.is_white == false)
+                        if ((piece.ID & ChessPiece.PAWN_ID) > 0)
+                            return true;
+                }
+                if ((piece.ID & (ChessPiece.BISHOP_ID | ChessPiece.QUEEN_ID)) > 0)
+                    return true;
+
+                break;
+            }
+            for (int x = this.x + 1, y = this.y - 1; (x < 8 && y >= 0); x++, y--)
+            {
+                piece = board.occupation[x, y];
+                if (piece == null) continue;
+                if (piece.is_white == this.is_white) break;
+
+                if (x == this.x + 1)
+                {
+                    if ((piece.ID & ChessPiece.KING_ID) > 0)
+                        return true;
+
+                    // extra pawn check (only for black king)
+                    if (this.is_white == false)
+                        if ((piece.ID & ChessPiece.PAWN_ID) > 0)
+                            return true;
+                }
+                if ((piece.ID & (ChessPiece.BISHOP_ID | ChessPiece.QUEEN_ID)) > 0)
+                    return true;
+
+                break;
+            }
+
+            // and KNIGHT checks
+            piece = board.get_occupation(this.x + 2, this.y + 1);
+            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+                return true;
+            piece = board.get_occupation(this.x + 1, this.y + 2);
+            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+                return true;
+            piece = board.get_occupation(this.x - 1, this.y + 2);
+            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+                return true;
+            piece = board.get_occupation(this.x - 2, this.y + 1);
+            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+                return true;
+
+            piece = board.get_occupation(this.x + 2, this.y - 1);
+            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+                return true;
+            piece = board.get_occupation(this.x + 1, this.y - 2);
+            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+                return true;
+            piece = board.get_occupation(this.x - 1, this.y - 2);
+            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+                return true;
+            piece = board.get_occupation(this.x - 2, this.y - 1);
+            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+                return true;
+
+            // no threats detected !
+            return false;
+        }
+    }
+
+    public class EnPassantTarget : ChessPiece
+    {
+        public EnPassantTarget(bool is_white, int x, int y)
+        {
+            this.value = 0;
+            this.ID = ChessPiece.EN_PASS_ID;
+            this.set(x, y);
+            this.is_white = is_white;
+            this.name = (this.is_white ? "White " : "Black ") + "EnPassant";
+
+            this.rep = new Bitmap(Bitmap.FromFile("../../assets/en_passant.png"), 64, 64);
+        }
     }
 
     public class Pawn : ChessPiece
@@ -201,6 +421,7 @@ namespace ChessCow2
         public Pawn(bool is_white, int x, int y)
         {
             this.value = 1;
+            this.ID = ChessPiece.PAWN_ID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -210,36 +431,38 @@ namespace ChessCow2
             this.name = (this.is_white ? "White " : "Black ") + "Pawn";
         }
 
-        public static List<Move> get_all_moves(ChessBoard board, ChessPiece mover, bool consider_selfcheck)
+        public override List<Move> get_all_moves(ChessBoard board)
         {
             List<Move> moves = new List<Move>();
             Move potential_move;
 
             // for pawns, we need to differentiate between the colors
             int direction = +1;
-            if (mover.is_white == false) direction = -1;
+            if (this.is_white == false) direction = -1;
 
-            potential_move = new Move(board, mover, mover.x - 1, mover.y + 1 * direction, Move.AttackState.PURE_ATTACK);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, this.x - 1, this.y + 1 * direction, Move.AttackState.PURE_ATTACK);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, mover.x + 1, mover.y + 1 * direction, Move.AttackState.PURE_ATTACK);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, this.x + 1, this.y + 1 * direction, Move.AttackState.PURE_ATTACK);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
 
-            potential_move = new Move(board, mover, mover.x, mover.y + 1 * direction, Move.AttackState.PURE_MOVEMENT);
-            if (potential_move.is_legal(board, consider_selfcheck) == false)
+            potential_move = new Move(board, this, this.x, this.y + 1 * direction, Move.AttackState.PURE_MOVEMENT);
+            if (potential_move.is_legal(board) == false)
                 return moves;
             moves.Add(potential_move);
 
             // pawn starter move
-            if (mover.move_count == 0)
+            if (this.move_count == 0)
             {
                 // if the 1-step move collides with ANYthing, we return
                 if (board.occupation[potential_move.target_x, potential_move.target_y] != null) return moves;
 
-                potential_move = new Move(board, mover, mover.x, mover.y + 2 * direction, Move.AttackState.PURE_MOVEMENT);
-                if (potential_move.is_legal(board, consider_selfcheck) == false)
+                potential_move = new Move(board, this, this.x, this.y + 2 * direction, Move.AttackState.PURE_MOVEMENT);
+                if (potential_move.is_legal(board) == false)
                     return moves;
+
+                potential_move.enable_en_passant = true;
                 moves.Add(potential_move);
             }
 
@@ -251,6 +474,7 @@ namespace ChessCow2
         public Knight(bool is_white, int x, int y)
         {
             this.value = 3;
+            this.ID = ChessPiece.KNIGHT_ID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -260,37 +484,35 @@ namespace ChessCow2
             this.name = (this.is_white ? "White " : "Black ") + "Knight";
         }
 
-        public static List<Move> get_all_moves(ChessBoard board, ChessPiece mover, bool consider_selfcheck)
+        public override List<Move> get_all_moves(ChessBoard board)
         {
             List<Move> moves = new List<Move>();
             Move potential_move;
 
-            potential_move = new Move(board, mover, mover.x + 2, mover.y + 1, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, this.x + 2, this.y + 1, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, mover.x + 1, mover.y + 2, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, this.x + 1, this.y + 2, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-
-            potential_move = new Move(board, mover, mover.x - 1, mover.y + 2, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, this.x - 1, this.y + 2, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, mover.x - 2, mover.y + 1, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
-                moves.Add(potential_move);
-
-            potential_move = new Move(board, mover, mover.x - 2, mover.y - 1, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
-                moves.Add(potential_move);
-            potential_move = new Move(board, mover, mover.x - 1, mover.y - 2, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, this.x - 2, this.y + 1, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
 
-            potential_move = new Move(board, mover, mover.x + 1, mover.y - 2, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, this.x + 2, this.y - 1, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, mover.x + 2, mover.y - 1, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, this.x + 1, this.y - 2, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, this.x - 1, this.y - 2, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
+            potential_move = new Move(board, this, this.x - 2, this.y - 1, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
 
             return moves;
@@ -301,6 +523,7 @@ namespace ChessCow2
         public Rook(bool is_white, int x, int y)
         {
             this.value = 5;
+            this.ID = ChessPiece.ROOK_ID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -310,43 +533,43 @@ namespace ChessCow2
             this.name = (this.is_white ? "White " : "Black ") + "Rook";
         }
 
-        public static List<Move> get_all_moves(ChessBoard board, ChessPiece mover, bool consider_selfcheck)
+        public override List<Move> get_all_moves(ChessBoard board)
         {
             List<Move> moves = new List<Move>();
             Move potential_move;
 
             // Rook Moves are so STRAIGHT FORWARD (HAaaa) that I dont need an OOB-check
-            for (int x = mover.x - 1; x >= 0; x--)
+            for (int x = this.x - 1; x >= 0; x--)
             {
-                potential_move = new Move(board, mover, x, mover.y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, this.y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (int x = mover.x + 1; x <= 7; x++)
+            for (int x = this.x + 1; x <= 7; x++)
             {
-                potential_move = new Move(board, mover, x, mover.y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, this.y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (int y = mover.y - 1; y >= 0; y--)
+            for (int y = this.y - 1; y >= 0; y--)
             {
-                potential_move = new Move(board, mover, mover.x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, this.x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (int y = mover.y + 1; y <= 7; y++)
+            for (int y = this.y + 1; y <= 7; y++)
             {
-                potential_move = new Move(board, mover, mover.x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, this.x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
@@ -362,6 +585,7 @@ namespace ChessCow2
         public Bishop(bool is_white, int x, int y)
         {
             this.value = 3;
+            this.ID = ChessPiece.BISHOP_ID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -371,7 +595,7 @@ namespace ChessCow2
             this.name = (this.is_white ? "White " : "Black ") + "Bishop";
         }
 
-        public static List<Move> get_all_moves(ChessBoard board, ChessPiece mover, bool consider_selfcheck)
+        public override List<Move> get_all_moves(ChessBoard board)
         {
             List<Move> moves = new List<Move>();
             Move potential_move;
@@ -379,37 +603,37 @@ namespace ChessCow2
             int x, y;
 
             // Bishop Moves are so straight forward that I dont need an OOB-check
-            for (x = mover.x + 1, y = mover.y + 1; x <= 7 && y <= 7; x++, y++)
+            for (x = this.x + 1, y = this.y + 1; x <= 7 && y <= 7; x++, y++)
             {
-                potential_move = new Move(board, mover, x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (x = mover.x - 1, y = mover.y + 1; x >= 0 && y <= 7; x--, y++)
+            for (x = this.x - 1, y = this.y + 1; x >= 0 && y <= 7; x--, y++)
             {
-                potential_move = new Move(board, mover, x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (x = mover.x - 1, y = mover.y - 1; x >= 0 && y >= 0; x--, y--)
+            for (x = this.x - 1, y = this.y - 1; x >= 0 && y >= 0; x--, y--)
             {
-                potential_move = new Move(board, mover, x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (x = mover.x + 1, y = mover.y - 1; x <= 7 && y >= 0; x++, y--)
+            for (x = this.x + 1, y = this.y - 1; x <= 7 && y >= 0; x++, y--)
             {
-                potential_move = new Move(board, mover, x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
@@ -424,6 +648,7 @@ namespace ChessCow2
         public Queen(bool is_white, int x, int y)
         {
             this.value = 8;
+            this.ID = ChessPiece.QUEEN_ID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -432,7 +657,7 @@ namespace ChessCow2
                 this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_queen.png"), 64, 64);
             this.name = (this.is_white ? "White " : "Black ") + "Queen";
         }
-        public static List<Move> get_all_moves(ChessBoard board, ChessPiece mover, bool consider_selfcheck)
+        public override List<Move> get_all_moves(ChessBoard board)
         {
             List<Move> moves = new List<Move>();
             Move potential_move;
@@ -443,74 +668,74 @@ namespace ChessCow2
             // with the board, because I simulate the board state for check-checks...
 
             // Rook Moves are so STRAIGHT FORWARD (HAaaa) that I dont need an OOB-check
-            for (x = mover.x - 1; x >= 0; x--)
+            for (x = this.x - 1; x >= 0; x--)
             {
-                potential_move = new Move(board, mover, x, mover.y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, this.y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (x = mover.x + 1; x <= 7; x++)
+            for (x = this.x + 1; x <= 7; x++)
             {
-                potential_move = new Move(board, mover, x, mover.y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, this.y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (y = mover.y - 1; y >= 0; y--)
+            for (y = this.y - 1; y >= 0; y--)
             {
-                potential_move = new Move(board, mover, mover.x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, this.x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (y = mover.y + 1; y <= 7; y++)
+            for (y = this.y + 1; y <= 7; y++)
             {
-                potential_move = new Move(board, mover, mover.x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, this.x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
             // Bishop Moves are so straight forward that I dont need an OOB-check
-            for (x = mover.x + 1, y = mover.y + 1; x <= 7 && y <= 7; x++, y++)
+            for (x = this.x + 1, y = this.y + 1; x <= 7 && y <= 7; x++, y++)
             {
-                potential_move = new Move(board, mover, x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (x = mover.x - 1, y = mover.y + 1; x >= 0 && y <= 7; x--, y++)
+            for (x = this.x - 1, y = this.y + 1; x >= 0 && y <= 7; x--, y++)
             {
-                potential_move = new Move(board, mover, x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (x = mover.x - 1, y = mover.y - 1; x >= 0 && y >= 0; x--, y--)
+            for (x = this.x - 1, y = this.y - 1; x >= 0 && y >= 0; x--, y--)
             {
-                potential_move = new Move(board, mover, x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
                     break;
             }
-            for (x = mover.x + 1, y = mover.y - 1; x <= 7 && y >= 0; x++, y--)
+            for (x = this.x + 1, y = this.y - 1; x <= 7 && y >= 0; x++, y--)
             {
-                potential_move = new Move(board, mover, x, y, Move.AttackState.BOTH);
-                if (potential_move.is_legal(board, consider_selfcheck) == true)
+                potential_move = new Move(board, this, x, y, Move.AttackState.BOTH);
+                if (potential_move.is_legal(board) == true)
                     moves.Add(potential_move);
                 // cant go through more than 1 enemy pieces
                 if (potential_move.target_piece != null)
@@ -525,6 +750,7 @@ namespace ChessCow2
         public King(bool is_white, int x, int y)
         {
             this.value = 12;
+            this.ID = ChessPiece.KING_ID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -533,36 +759,37 @@ namespace ChessCow2
                 this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_king.png"), 64, 64);
             this.name = (this.is_white ? "White " : "Black ") + "King";
         }
-        public static List<Move> get_all_moves(ChessBoard board, ChessPiece mover, bool consider_selfcheck)
+
+        public override List<Move> get_all_moves(ChessBoard board)
         {
             List<Move> moves = new List<Move>();
             Move potential_move;
 
-            int mov_x = mover.x;
-            int mov_y = mover.y;
-            potential_move = new Move(board, mover, ++mov_x, mov_y, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            int mov_x = this.x;
+            int mov_y = this.y;
+            potential_move = new Move(board, this, ++mov_x, mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, mov_x, ++mov_y, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, mov_x, ++mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, --mov_x, mov_y, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, --mov_x, mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, --mov_x, mov_y, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, --mov_x, mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, mov_x, --mov_y, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, mov_x, --mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, mov_x, --mov_y, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, mov_x, --mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, ++mov_x, mov_y, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, ++mov_x, mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
-            potential_move = new Move(board, mover, ++mov_x, mov_y, Move.AttackState.BOTH);
-            if (potential_move.is_legal(board, consider_selfcheck) == true)
+            potential_move = new Move(board, this, ++mov_x, mov_y, Move.AttackState.BOTH);
+            if (potential_move.is_legal(board) == true)
                 moves.Add(potential_move);
 
             return moves;
