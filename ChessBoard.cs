@@ -378,11 +378,11 @@ namespace ChessCow2
             if (move == null) return;
 
             // some outputs
-            Console.WriteLine("Playing {0}...", move.ToString());
+            Console.WriteLine("Playing {0}.", move.ToString());
             if (move.target_piece != null)
             {
                 Console.WriteLine("~~~ Disposing of Piece: {0}", move.target_piece.name);
-                //move.target_piece.alive = false; -- this happens in execute_move() already
+                //move.target_piece.alive = false; -- this happens in execute_move() now
             }
             Console.WriteLine("");
 
@@ -479,6 +479,7 @@ namespace ChessCow2
             {
                 this.en_passant_target.alive = true;
                 this.en_passant_target.is_white = this.whites_turn;
+                this.en_passant_target.name = (this.is_white ? "White " : "Black ") + "Pawn";
 
                 if (move.moving_piece.is_white == true)
                     this.en_passant_target.set(move.moving_piece.x, 2);
@@ -486,7 +487,7 @@ namespace ChessCow2
                     this.en_passant_target.set(move.moving_piece.x, 5);
 
                 // additional reference to the correct moving pawn
-                this.occupation[this.en_passant_target.x, this.en_passant_target.y] = en_passant_target;
+                this.occupation[this.en_passant_target.x, this.en_passant_target.y] = this.en_passant_target;
             }
 
             // change whose turn it is
@@ -510,12 +511,12 @@ namespace ChessCow2
                 if (this.en_passant_target.y == 2) // basically, if en_passant_target.is_white == true
                 {
                     // I can use the en passant Y coord to index into the correct pawn
-                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = white_pieces[this.en_passant_target.x];
+                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = this.en_passant_target;
                 }
                 else if (this.en_passant_target.y == 5) // basically, if en_passant_target.is_white == false
                 {
                     // I can use the en passant Y coord to index into the correct pawn
-                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = black_pieces[this.en_passant_target.x];
+                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = this.en_passant_target;
                 }
 
                 // the old en passant target had the opposite color of the current turn holder
@@ -558,12 +559,12 @@ namespace ChessCow2
                 if (this.en_passant_target.y == 2) // basically, if en_passant_target.is_white == true
                 {
                     // I can use the en passant Y coord to index into the correct pawn
-                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = white_pieces[this.en_passant_target.x];
+                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = this.en_passant_target;
                 }
                 else if (this.en_passant_target.y == 5) // basically, if en_passant_target.is_white == false
                 {
                     // I can use the en passant Y coord to index into the correct pawn
-                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = black_pieces[this.en_passant_target.x];
+                    this.occupation[this.en_passant_target.x, this.en_passant_target.y] = this.en_passant_target;
                 }
             }
             // check if we took a piece and reinstate it if so

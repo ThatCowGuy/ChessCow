@@ -78,7 +78,7 @@ namespace ChessCow2
             if (this.target_piece == null)
                 return string.Format("Move: {0} -> ({1}{2})", this.moving_piece.name, file, row);
 
-            return string.Format("Move: {0} xx ({1}{2})", this.moving_piece.name, file, row);
+            return string.Format("Move: {0} -> ({1}{2}) x {3}", this.moving_piece.name, file, row, this.target_piece.name);
         }
 
         public bool is_legal(ChessBoard board)
@@ -102,11 +102,10 @@ namespace ChessCow2
 
             if (this.attack_state == AttackState.PURE_ATTACK)
             {
-                // check if this move has an enemy target; if it doesnt, this is
-                // a pure control move (illegal, but gives player more control)
                 if (this.target_piece == null)
                 {
-                    this.attack_state = AttackState.PURE_CONTROL;
+                    // this.attack_state = AttackState.PURE_CONTROL;
+                    return false;
                 }
             }
             else if (this.attack_state == AttackState.PURE_MOVEMENT)

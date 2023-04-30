@@ -8,3 +8,13 @@
 \\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\obj\Debug\ChessCow2.csproj.CoreCompileInputs.cache
 \\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\obj\Debug\ChessCow2.exe
 \\wsl.localhost\Ubuntu-20.04\home\cow\ChessCow\obj\Debug\ChessCow2.pdb
+C:\Users\cray4\source\repos\ChessCow\bin\Debug\ChessCow2.exe.config
+C:\Users\cray4\source\repos\ChessCow\bin\Debug\ChessCow2.exe
+C:\Users\cray4\source\repos\ChessCow\bin\Debug\ChessCow2.pdb
+C:\Users\cray4\source\repos\ChessCow\obj\Debug\ChessCow2.csproj.AssemblyReference.cache
+C:\Users\cray4\source\repos\ChessCow\obj\Debug\ChessCow2.Form1.resources
+C:\Users\cray4\source\repos\ChessCow\obj\Debug\ChessCow2.Properties.Resources.resources
+C:\Users\cray4\source\repos\ChessCow\obj\Debug\ChessCow2.csproj.GenerateResource.cache
+C:\Users\cray4\source\repos\ChessCow\obj\Debug\ChessCow2.csproj.CoreCompileInputs.cache
+C:\Users\cray4\source\repos\ChessCow\obj\Debug\ChessCow2.exe
+C:\Users\cray4\source\repos\ChessCow\obj\Debug\ChessCow2.pdb

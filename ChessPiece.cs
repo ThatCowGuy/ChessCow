@@ -48,6 +48,12 @@ namespace ChessCow2
         public string name;
         public int value;
 
+        public override string ToString()
+        {
+            string description = string.Format("{0} on ({1}|{2}):\n", this.name, this.x, this.y);
+            description += string.Format("Alive: {0}\n", this.alive);
+            return description;
+        }
         public Rectangle index_to_rect(int x, int y)
         {
             // flip y index so 0 is at the bottom
@@ -442,10 +448,34 @@ namespace ChessCow2
 
             potential_move = new Move(board, this, this.x - 1, this.y + 1 * direction, Move.AttackState.PURE_ATTACK);
             if (potential_move.is_legal(board) == true)
+            {
+                if (potential_move.target_piece.ID == ChessPiece.EN_PASS_ID)
+                {
+                    Console.WriteLine(">>> X-1 Is EnPass");
+                    Console.WriteLine(string.Format(">>> {0}", potential_move));
+                    // this.y is in every en-passant case the y coord of the attacked piece
+                    int actual_target_x = potential_move.target_x;
+                    int actual_target_y = this.y;
+                    potential_move.target_piece = board.occupation[actual_target_x, actual_target_y];
+                    Console.WriteLine(string.Format(">>> {0}", potential_move));
+                }
                 moves.Add(potential_move);
+            }
             potential_move = new Move(board, this, this.x + 1, this.y + 1 * direction, Move.AttackState.PURE_ATTACK);
             if (potential_move.is_legal(board) == true)
+            {
+                if (potential_move.target_piece.ID == ChessPiece.EN_PASS_ID)
+                {
+                    Console.WriteLine(">>> X+1 Is EnPass");
+                    Console.WriteLine(string.Format(">>> {0}", potential_move));
+                    // this.y is in every en-passant case the y coord of the attacked piece
+                    int actual_target_x = potential_move.target_x;
+                    int actual_target_y = this.y;
+                    potential_move.target_piece = board.occupation[actual_target_x, actual_target_y];
+                    Console.WriteLine(string.Format(">>> {0}", potential_move));
+                }
                 moves.Add(potential_move);
+            }
 
             potential_move = new Move(board, this, this.x, this.y + 1 * direction, Move.AttackState.PURE_MOVEMENT);
             if (potential_move.is_legal(board) == false)

@@ -69,6 +69,16 @@ namespace ChessCow2
             // flip y so that 0 is at the bottom
             tile_y = 7 - tile_y;
 
+            MouseEventArgs mouse_e = (MouseEventArgs)e;
+            if (mouse_e.Button == MouseButtons.Right)
+            {
+                Console.WriteLine(string.Format("Inspecting Tile ({0}|{1}):", tile_x, tile_y));
+                if (board.occupation[tile_x, tile_y] != null)
+                    Console.WriteLine(board.occupation[tile_x, tile_y]);
+
+                else Console.WriteLine("NULL");
+            }
+
             this.board.process_click(tile_x, tile_y);
             this.ChessBoardPanel.Refresh();
             // also redraw some GUI stuff
