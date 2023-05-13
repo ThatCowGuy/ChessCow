@@ -10,6 +10,13 @@ namespace ChessCow2
     {
         public static System.Random RNG = new Random();
 
+        // these are statically available, so that it is accessible in all recursions
+        public static double current_best_eval_change;
+        public static double starting_eval;
+        public static bool is_white;
+        public static int depth = 1;
+        public static int sim_count;
+
         public static Move get_random_move(ChessBoard board)
         {
             // dont attempt to move if the game is over
@@ -28,7 +35,7 @@ namespace ChessCow2
             }
             return null;
         }
-        public static Move get_best_move(ChessBoard board)
+        public static Move get_one_best_move(ChessBoard board)
         {
             // dont attempt to move if the game is over
             if (board.gamestate != ChessBoard.GameState.ONGOING)
@@ -38,19 +45,15 @@ namespace ChessCow2
             Bot.starting_eval = evaluate_position(board, board.whites_turn);
             Bot.is_white = board.whites_turn;
 
+            Bot.sim_count = 0;
             List<Move> best_moves = Bot.get_best_moves(board, Bot.starting_eval, Bot.depth);
+            Console.WriteLine("Simulated Moves in Total: {0}", Bot.sim_count);
 
             if (best_moves.Count == 0) return null;
 
             int move_index = Bot.RNG.Next(0, best_moves.Count);
             return best_moves.ElementAt(move_index);
         }
-
-        // these are statically available, so that it is accessible in all recursions
-        public static double current_best_eval_change;
-        public static double starting_eval;
-        public static bool is_white;
-        public static int depth;
 
         public static List<Move> get_best_moves(ChessBoard board, double previous_eval, int depth)
         {
@@ -64,42 +67,45 @@ namespace ChessCow2
             double max_eval_change = -100000;
             foreach (Move move in current_moves)
             {
-                board.play_move_silent(move);
-                double current_eval = evaluate_position(board, !board.whites_turn);
+                ChessBoard simulation_outer = new ChessBoard(board);
+                simulation_outer.execute_move(new Move(move, simulation_outer));
+                simulation_outer.calc_legal_moves();
+                Bot.sim_count++;
+
+                double current_eval = evaluate_position(simulation_outer, !simulation_outer.whites_turn); // NOTE: NOT-board.whites_turn
 
                 if (depth > 0)
                 {
-                    List<Move> best_counter_moves = get_best_moves(board, current_eval, (depth - 1));
+                    List<Move> best_counter_moves = get_best_moves(simulation_outer, current_eval, (depth - 1));
 
                     if (best_counter_moves.Count > 0)
                     {
-                        // I really should test every best move here.. or actually every-every move...
-                        board.play_move_silent(best_counter_moves.ElementAt(0));
-                        // NOTE: using NOT whites turn here
-                        current_eval = evaluate_position(board, board.whites_turn);
+                        ChessBoard simulation_inner = new ChessBoard(simulation_outer);
+                        simulation_inner.execute_move(new Move(best_counter_moves.ElementAt(0), simulation_inner));
+                        simulation_inner.calc_legal_moves();
 
-                        board.undo_move(best_counter_moves.ElementAt(0));
+                        // NOTE: using NOT whites turn here
+                        current_eval = evaluate_position(simulation_inner, simulation_inner.whites_turn);
                     }
                     else
                     {
                         Console.WriteLine(move.ToString() + "-> Results in a Game-Over");
-                        if (board.whites_turn == true)
+                        if (simulation_outer.whites_turn == true)
                         {
-                            if (board.white_pieces[ChessPiece.KING].is_checked(board) == true)
+                            if (simulation_outer.white_pieces[ChessPiece.KING].is_checked(simulation_outer) == true)
                                 current_eval = 10000;
                             else
                                 current_eval = 0;
                         }
-                        if (board.whites_turn == false)
+                        if (simulation_outer.whites_turn == false)
                         {
-                            if (board.black_pieces[ChessPiece.KING].is_checked(board) == true)
+                            if (simulation_outer.black_pieces[ChessPiece.KING].is_checked(simulation_outer) == true)
                                 current_eval = 10000;
                             else
                                 current_eval = 0;
                         }
                     }
                 }
-                board.undo_move(move);
 
                 move.eval_change = current_eval - previous_eval;
                 if (move.eval_change > max_eval_change)

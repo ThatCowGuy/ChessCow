@@ -42,11 +42,7 @@ namespace ChessCow2
         public int origin_x;
         public int origin_y;
 
-        // pawns will set this to true if they move 2 spaces at once
-        public bool enable_en_passant;
-        // moves might disable an existing en passant, but they need to remember where
-        public int disabled_en_passant_x;
-        public int disabled_en_passant_y;
+        public bool spawning_en_passant_target;
 
         public double eval_change = 0;
 
@@ -62,10 +58,26 @@ namespace ChessCow2
             // for undoing moves
             this.origin_x = this.moving_piece.x;
             this.origin_y = this.moving_piece.y;
+        }
+        public Move(Move move, ChessBoard affected_board)
+        {
+            // get the correct, corresponding moving piece on the new board
+            int moving_UID = move.moving_piece.UID;
+            if (move.moving_piece.is_white == true)
+                this.moving_piece = affected_board.white_pieces[moving_UID];
+            else
+                this.moving_piece = affected_board.black_pieces[moving_UID];
 
-            this.enable_en_passant = false;
-            this.disabled_en_passant_x = -1;
-            this.disabled_en_passant_y = -1;
+            this.target_x = move.target_x;
+            this.target_y = move.target_y;
+            this.attack_state = move.attack_state;
+            this.calc_target_piece(affected_board);
+
+            this.origin_x = move.origin_x;
+            this.origin_y = move.origin_y;
+
+            this.spawning_en_passant_target = move.spawning_en_passant_target;
+            this.legal = move.legal;
         }
 
         public override string ToString()
@@ -116,20 +128,20 @@ namespace ChessCow2
             }
 
             // and finally, check if the move results in a check for your own king
-            board.simulate_move(this);
-
+            ChessBoard simulation = new ChessBoard(board);
+            simulation.execute_move(new Move(this, simulation));
+            
             bool check = false;
-            if (board.whites_turn == true)
+            if (simulation.whites_turn == true)
             {
-                if (board.black_pieces[ChessPiece.KING].is_checked(board) == true)
+                if (simulation.black_pieces[ChessPiece.KING].is_checked(simulation) == true)
                     check = true;
             }
-            if (board.whites_turn == false)
+            if (simulation.whites_turn == false)
             {
-                if (board.white_pieces[ChessPiece.KING].is_checked(board) == true)
+                if (simulation.white_pieces[ChessPiece.KING].is_checked(simulation) == true)
                     check = true;
             }
-            board.undo_simulation(this);
             if (check == true)
                 return false;
 

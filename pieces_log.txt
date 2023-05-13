@@ -1,0 +1,106 @@
+White Pawn on (0|2) is alive.
+White Pawn on (2|2) is alive.
+White Pawn on (2|1) is alive.
+White Pawn on (3|3) is alive.
+White Pawn on (4|6) is alive.
+White Pawn on (5|1) is alive.
+White Pawn on (6|1) is alive.
+White Pawn on (7|3) is alive.
+White Rook on (0|0) is alive.
+White Knight on (2|2) is DEAD!
+White Bishop on (6|4) is alive.
+White Queen on (7|4) is alive.
+White King on (4|0) is alive.
+White Bishop on (1|4) is alive.
+White Knight on (3|7) is DEAD!
+White Rook on (7|0) is alive.
+---------------------
+Move: White Pawn -> (a4)
+Move: White Pawn -> (c4)
+Move: White Pawn -> (d8) x Black Rook
+Move: White Pawn -> (e8)
+Move: White Pawn -> (f3)
+Move: White Pawn -> (f4)
+Move: White Pawn -> (g3)
+Move: White Pawn -> (g4)
+Move: White Rook -> (b1)
+Move: White Rook -> (c1)
+Move: White Rook -> (d1)
+Move: White Rook -> (a2)
+Move: White Bishop -> (h6)
+Move: White Bishop -> (f6)
+Move: White Bishop -> (f4)
+Move: White Bishop -> (e3)
+Move: White Bishop -> (d2)
+Move: White Bishop -> (c1)
+Move: White Queen -> (h6)
+Move: White Queen -> (h7) x Black Knight
+Move: White Queen -> (g6)
+Move: White Queen -> (f7)
+Move: White Queen -> (e8)
+Move: White Queen -> (g4)
+Move: White Queen -> (f3)
+Move: White Queen -> (e2)
+Move: White Queen -> (d1)
+Move: White King -> (f1)
+Move: White King -> (e2)
+Move: White King -> (d2)
+Move: White King -> (d1)
+Move: White Bishop -> (c6)
+Move: White Bishop -> (d7) x Black King
+Move: White Bishop -> (a6) x Black Pawn
+Move: White Bishop -> (a4)
+Move: White Bishop -> (c4)
+Move: White Bishop -> (d3)
+Move: White Bishop -> (e2)
+Move: White Bishop -> (f1)
+Move: White Rook -> (g1)
+Move: White Rook -> (f1)
+Move: White Rook -> (h2)
+Move: White Rook -> (h3)
+==========================
+Black Pawn on (0|5) is alive.
+Black Pawn on (1|4) is DEAD!
+Black Pawn on (2|6) is alive.
+Black Pawn on (3|4) is alive.
+Black Pawn on (4|5) is alive.
+Black Pawn on (5|5) is DEAD!
+Black Pawn on (6|6) is alive.
+Black Pawn on (7|4) is DEAD!
+Black Rook on (3|7) is alive.
+Black Knight on (2|5) is DEAD!
+Black Bishop on (1|6) is alive.
+Black Queen on (4|6) is DEAD!
+Black King on (3|6) is alive.
+Black Bishop on (2|2) is DEAD!
+Black Knight on (7|6) is alive.
+Black Rook on (7|7) is alive.
+---------------------
+Move: Black Pawn -> (b5) x White Bishop
+Move: Black Pawn -> (a5)
+Move: Black Pawn -> (c6)
+Move: Black Pawn -> (c5)
+Move: Black Pawn -> (e5)
+Move: Black Pawn -> (g6)
+Move: Black Rook -> (c8)
+Move: Black Rook -> (b8)
+Move: Black Rook -> (a8)
+Move: Black Rook -> (e8)
+Move: Black Rook -> (f8)
+Move: Black Rook -> (g8)
+Move: Black Bishop -> (c8)
+Move: Black Bishop -> (a8)
+Move: Black Bishop -> (c6)
+Move: Black King -> (e7) x White Pawn
+Move: Black King -> (e8)
+Move: Black King -> (c8)
+Move: Black King -> (c6)
+Move: Black King -> (d6)
+Move: Black Knight -> (f8)
+Move: Black Knight -> (g5) x White Bishop
+Move: Black Knight -> (f6)
+Move: Black Rook -> (g8)
+Move: Black Rook -> (f8)
+Move: Black Rook -> (e8)
+==========================
+White EnPassant on (0|0) is DEAD!

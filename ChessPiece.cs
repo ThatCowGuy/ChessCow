@@ -27,7 +27,8 @@ namespace ChessCow2
         public const int KING_ID    = 0b00010000;
         public const int QUEEN_ID   = 0b00100000;
         public const int EN_PASS_ID = 0b01000000;
-        public int ID;
+        public int ID; // what type of piece am I ?
+        public int UID; // whats my number on the board ?
 
         // these are just for readability
         public const bool IS_WHITE = true;
@@ -47,6 +48,7 @@ namespace ChessCow2
 
         public string name;
         public int value;
+
 
         public override string ToString()
         {
@@ -85,7 +87,7 @@ namespace ChessCow2
 
         public ChessPiece()
         {
-            ChessPiece.count++; Console.WriteLine("Piece created. Count: {0}", count);
+            // ChessPiece.count++; Console.WriteLine("Piece created. Count: {0}", count);
         }
         public void Dispose()
         {
@@ -93,10 +95,10 @@ namespace ChessCow2
             //Dispose(true);
             //System.GC.SuppressFinalize(this);
 
-            ChessPiece.count--;
+            // ChessPiece.count--;
             Console.WriteLine("{0} destroyed. Count: {1}", this.name, count);
         }
-        public ChessPiece(bool is_white, int x, int y)
+        public ChessPiece(bool is_white, int x, int y, int UID)
         {
             this.set(x, y);
             this.is_white = is_white;
@@ -221,6 +223,7 @@ namespace ChessCow2
             {
                 piece = board.occupation[this.x, y];
                 if (piece == null) continue;
+                if (piece.alive == false) continue;
                 if (piece.is_white == this.is_white) break;
 
                 // first step, check for enemy king
@@ -241,6 +244,7 @@ namespace ChessCow2
             {
                 piece = board.occupation[this.x, y];
                 if (piece == null) continue;
+                if (piece.alive == false) continue;
                 if (piece.is_white == this.is_white) break;
 
                 if (y == this.y - 1)
@@ -257,6 +261,7 @@ namespace ChessCow2
             {
                 piece = board.occupation[x, this.y];
                 if (piece == null) continue;
+                if (piece.alive == false) continue;
                 if (piece.is_white == this.is_white) break;
 
                 if (x == this.x - 1)
@@ -273,6 +278,7 @@ namespace ChessCow2
             {
                 piece = board.occupation[x, this.y];
                 if (piece == null) continue;
+                if (piece.alive == false) continue;
                 if (piece.is_white == this.is_white) break;
 
                 if (x == this.x + 1)
@@ -291,6 +297,7 @@ namespace ChessCow2
             {
                 piece = board.occupation[x, y];
                 if (piece == null) continue;
+                if (piece.alive == false) continue;
                 if (piece.is_white == this.is_white) break;
 
                 // first step, check for enemy king (1 coord is enough)
@@ -316,6 +323,7 @@ namespace ChessCow2
             {
                 piece = board.occupation[x, y];
                 if (piece == null) continue;
+                if (piece.alive == false) continue;
                 if (piece.is_white == this.is_white) break;
 
                 if (x == this.x - 1)
@@ -337,6 +345,7 @@ namespace ChessCow2
             {
                 piece = board.occupation[x, y];
                 if (piece == null) continue;
+                if (piece.alive == false) continue;
                 if (piece.is_white == this.is_white) break;
 
                 if (x == this.x - 1)
@@ -358,6 +367,7 @@ namespace ChessCow2
             {
                 piece = board.occupation[x, y];
                 if (piece == null) continue;
+                if (piece.alive == false) continue;
                 if (piece.is_white == this.is_white) break;
 
                 if (x == this.x + 1)
@@ -378,29 +388,29 @@ namespace ChessCow2
 
             // and KNIGHT checks
             piece = board.get_occupation(this.x + 2, this.y + 1);
-            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+            if (piece != null && piece.alive == true && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
                 return true;
             piece = board.get_occupation(this.x + 1, this.y + 2);
-            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+            if (piece != null && piece.alive == true && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
                 return true;
             piece = board.get_occupation(this.x - 1, this.y + 2);
-            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+            if (piece != null && piece.alive == true && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
                 return true;
             piece = board.get_occupation(this.x - 2, this.y + 1);
-            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+            if (piece != null && piece.alive == true && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
                 return true;
 
             piece = board.get_occupation(this.x + 2, this.y - 1);
-            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+            if (piece != null && piece.alive == true && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
                 return true;
             piece = board.get_occupation(this.x + 1, this.y - 2);
-            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+            if (piece != null && piece.alive == true && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
                 return true;
             piece = board.get_occupation(this.x - 1, this.y - 2);
-            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+            if (piece != null && piece.alive == true && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
                 return true;
             piece = board.get_occupation(this.x - 2, this.y - 1);
-            if (piece != null && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
+            if (piece != null && piece.alive == true && piece.is_white != this.is_white && (piece.ID & ChessPiece.KNIGHT_ID) > 0)
                 return true;
 
             // no threats detected !
@@ -410,10 +420,11 @@ namespace ChessCow2
 
     public class EnPassantTarget : ChessPiece
     {
-        public EnPassantTarget(bool is_white, int x, int y)
+        public EnPassantTarget(bool is_white, int x, int y, int UID)
         {
             this.value = 0;
             this.ID = ChessPiece.EN_PASS_ID;
+            this.UID = UID;
             this.set(x, y);
             this.is_white = is_white;
             this.name = (this.is_white ? "White " : "Black ") + "EnPassant";
@@ -424,10 +435,11 @@ namespace ChessCow2
 
     public class Pawn : ChessPiece
     {
-        public Pawn(bool is_white, int x, int y)
+        public Pawn(bool is_white, int x, int y, int UID)
         {
             this.value = 1;
             this.ID = ChessPiece.PAWN_ID;
+            this.UID = UID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -436,7 +448,21 @@ namespace ChessCow2
                 this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_pawn.png"), 64, 64);
             this.name = (this.is_white ? "White " : "Black ") + "Pawn";
         }
+        // for cloning purposes
+        public Pawn(Pawn piece)
+        {
+            this.value = piece.value;
+            this.ID = piece.ID;
+            this.UID = piece.UID;
+            this.set(piece.x, piece.y);
+            this.is_white = piece.is_white;
+            this.rep = piece.rep;
+            this.name = piece.name;
 
+            this.alive = piece.alive;
+            this.move_count = piece.move_count;
+            this.selected = piece.selected; // neccessary ?
+        }
         public override List<Move> get_all_moves(ChessBoard board)
         {
             List<Move> moves = new List<Move>();
@@ -446,41 +472,18 @@ namespace ChessCow2
             int direction = +1;
             if (this.is_white == false) direction = -1;
 
+            // first, check the 2 attacks
             potential_move = new Move(board, this, this.x - 1, this.y + 1 * direction, Move.AttackState.PURE_ATTACK);
             if (potential_move.is_legal(board) == true)
-            {
-                if (potential_move.target_piece.ID == ChessPiece.EN_PASS_ID)
-                {
-                    Console.WriteLine(">>> X-1 Is EnPass");
-                    Console.WriteLine(string.Format(">>> {0}", potential_move));
-                    // this.y is in every en-passant case the y coord of the attacked piece
-                    int actual_target_x = potential_move.target_x;
-                    int actual_target_y = this.y;
-                    potential_move.target_piece = board.occupation[actual_target_x, actual_target_y];
-                    Console.WriteLine(string.Format(">>> {0}", potential_move));
-                }
                 moves.Add(potential_move);
-            }
             potential_move = new Move(board, this, this.x + 1, this.y + 1 * direction, Move.AttackState.PURE_ATTACK);
             if (potential_move.is_legal(board) == true)
-            {
-                if (potential_move.target_piece.ID == ChessPiece.EN_PASS_ID)
-                {
-                    Console.WriteLine(">>> X+1 Is EnPass");
-                    Console.WriteLine(string.Format(">>> {0}", potential_move));
-                    // this.y is in every en-passant case the y coord of the attacked piece
-                    int actual_target_x = potential_move.target_x;
-                    int actual_target_y = this.y;
-                    potential_move.target_piece = board.occupation[actual_target_x, actual_target_y];
-                    Console.WriteLine(string.Format(">>> {0}", potential_move));
-                }
                 moves.Add(potential_move);
-            }
 
+            // then the 1-forward move
             potential_move = new Move(board, this, this.x, this.y + 1 * direction, Move.AttackState.PURE_MOVEMENT);
-            if (potential_move.is_legal(board) == false)
-                return moves;
-            moves.Add(potential_move);
+            if (potential_move.is_legal(board) == true)
+                moves.Add(potential_move);
 
             // pawn starter move
             if (this.move_count == 0)
@@ -489,22 +492,20 @@ namespace ChessCow2
                 if (board.occupation[potential_move.target_x, potential_move.target_y] != null) return moves;
 
                 potential_move = new Move(board, this, this.x, this.y + 2 * direction, Move.AttackState.PURE_MOVEMENT);
-                if (potential_move.is_legal(board) == false)
-                    return moves;
-
-                potential_move.enable_en_passant = true;
-                moves.Add(potential_move);
+                if (potential_move.is_legal(board) == true)
+                    moves.Add(potential_move);
             }
-
+            // done
             return moves;
         }
     }
     public class Knight : ChessPiece
     {
-        public Knight(bool is_white, int x, int y)
+        public Knight(bool is_white, int x, int y, int UID)
         {
             this.value = 3;
             this.ID = ChessPiece.KNIGHT_ID;
+            this.UID = UID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -512,6 +513,21 @@ namespace ChessCow2
             if (this.is_white == false)
                 this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_knight.png"), 64, 64);
             this.name = (this.is_white ? "White " : "Black ") + "Knight";
+        }
+        // for cloning purposes
+        public Knight(Knight piece)
+        {
+            this.value = piece.value;
+            this.ID = piece.ID;
+            this.UID = piece.UID;
+            this.set(piece.x, piece.y);
+            this.is_white = piece.is_white;
+            this.rep = piece.rep;
+            this.name = piece.name;
+
+            this.alive = piece.alive;
+            this.move_count = piece.move_count;
+            this.selected = piece.selected; // neccessary ?
         }
 
         public override List<Move> get_all_moves(ChessBoard board)
@@ -550,10 +566,11 @@ namespace ChessCow2
     }
     public class Rook : ChessPiece
     {
-        public Rook(bool is_white, int x, int y)
+        public Rook(bool is_white, int x, int y, int UID)
         {
             this.value = 5;
             this.ID = ChessPiece.ROOK_ID;
+            this.UID = UID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -561,6 +578,21 @@ namespace ChessCow2
             if (this.is_white == false)
                 this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_rook.png"), 64, 64);
             this.name = (this.is_white ? "White " : "Black ") + "Rook";
+        }
+        // for cloning purposes
+        public Rook(Rook piece)
+        {
+            this.value = piece.value;
+            this.ID = piece.ID;
+            this.UID = piece.UID;
+            this.set(piece.x, piece.y);
+            this.is_white = piece.is_white;
+            this.rep = piece.rep;
+            this.name = piece.name;
+
+            this.alive = piece.alive;
+            this.move_count = piece.move_count;
+            this.selected = piece.selected; // neccessary ?
         }
 
         public override List<Move> get_all_moves(ChessBoard board)
@@ -612,10 +644,11 @@ namespace ChessCow2
     
     public class Bishop : ChessPiece
     {
-        public Bishop(bool is_white, int x, int y)
+        public Bishop(bool is_white, int x, int y, int UID)
         {
             this.value = 3;
             this.ID = ChessPiece.BISHOP_ID;
+            this.UID = UID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -623,6 +656,21 @@ namespace ChessCow2
             if (this.is_white == false)
                 this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_bishop.png"), 64, 64);
             this.name = (this.is_white ? "White " : "Black ") + "Bishop";
+        }
+        // for cloning purposes
+        public Bishop(Bishop piece)
+        {
+            this.value = piece.value;
+            this.ID = piece.ID;
+            this.UID = piece.UID;
+            this.set(piece.x, piece.y);
+            this.is_white = piece.is_white;
+            this.rep = piece.rep;
+            this.name = piece.name;
+
+            this.alive = piece.alive;
+            this.move_count = piece.move_count;
+            this.selected = piece.selected; // neccessary ?
         }
 
         public override List<Move> get_all_moves(ChessBoard board)
@@ -675,10 +723,11 @@ namespace ChessCow2
     }
     public class Queen : ChessPiece
     {
-        public Queen(bool is_white, int x, int y)
+        public Queen(bool is_white, int x, int y, int UID)
         {
-            this.value = 8;
+            this.value = 9;
             this.ID = ChessPiece.QUEEN_ID;
+            this.UID = UID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -686,6 +735,21 @@ namespace ChessCow2
             if (this.is_white == false)
                 this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_queen.png"), 64, 64);
             this.name = (this.is_white ? "White " : "Black ") + "Queen";
+        }
+        // for cloning purposes
+        public Queen(Queen piece)
+        {
+            this.value = piece.value;
+            this.ID = piece.ID;
+            this.UID = piece.UID;
+            this.set(piece.x, piece.y);
+            this.is_white = piece.is_white;
+            this.rep = piece.rep;
+            this.name = piece.name;
+
+            this.alive = piece.alive;
+            this.move_count = piece.move_count;
+            this.selected = piece.selected; // neccessary ?
         }
         public override List<Move> get_all_moves(ChessBoard board)
         {
@@ -777,10 +841,11 @@ namespace ChessCow2
     }
     public class King : ChessPiece
     {
-        public King(bool is_white, int x, int y)
+        public King(bool is_white, int x, int y, int UID)
         {
             this.value = 12;
             this.ID = ChessPiece.KING_ID;
+            this.UID = UID;
             this.set(x, y);
             this.is_white = is_white;
             if (this.is_white == true)
@@ -788,6 +853,21 @@ namespace ChessCow2
             if (this.is_white == false)
                 this.rep = new Bitmap(Bitmap.FromFile("../../assets/black_king.png"), 64, 64);
             this.name = (this.is_white ? "White " : "Black ") + "King";
+        }
+        // for cloning purposes
+        public King(King piece)
+        {
+            this.value = piece.value;
+            this.ID = piece.ID;
+            this.UID = piece.UID;
+            this.set(piece.x, piece.y);
+            this.is_white = piece.is_white;
+            this.rep = piece.rep;
+            this.name = piece.name;
+
+            this.alive = piece.alive;
+            this.move_count = piece.move_count;
+            this.selected = piece.selected; // neccessary ?
         }
 
         public override List<Move> get_all_moves(ChessBoard board)

@@ -49,6 +49,9 @@
     <Compile Include="ChessBoard.cs" />
     <Compile Include="ChessPiece.cs" />
     <Compile Include="Bot.cs" />
+    <Compile Include="ChessGame.cs" />
+    <Compile Include="ChessBoardMini.cs" />
+    <Compile Include="ChessPieceMini.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
